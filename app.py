@@ -589,7 +589,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     
                     if asin_targets:
                         for asin in asin_targets:
-                            row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', '', '', default_bid, '', '', '动态竞价 - 仅降低', '', '', f'asin="{asin}"']
+                            row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', default_bid, '', '', '动态竞价 - 仅降低', '', '', f'asin="{asin}"']
                             sp_rows.append(row_product_target_sp)
                     
                     # 否定商品定向: from global neg_asin only (no neg_brand for SP)
