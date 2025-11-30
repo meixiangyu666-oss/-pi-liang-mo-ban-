@@ -9,10 +9,10 @@ import tempfile
 import os
 
 # Streamlit App Title and Description
-st.title("品牌广告 Header 生成工具")
+st.title("批量广告上传模版-生成工具")
 st.markdown("""
 ### 代码内容说明
-此工具基于提供的 Python 脚本 `test 品牌所有广告 集合版.py` 开发，用于从上传的 Excel 文件（默认 sheet: '品牌广告'）中提取全局设置、活动数据和关键词信息，生成广告 Header 文件。  
+此工具用于从上传的 Excel 文件（默认 sheet: '品牌广告'）中提取全局设置、活动数据和关键词信息，生成广告 Header 文件。  
 **主要功能：**  
 - 支持（品牌旗舰店、商品集、商品详情页、SP-商品推广）主题的动态区域检测和数据提取。  
 - 处理广告活动、广告组、视频/商品集广告、关键词、否定关键词、商品定向等行生成。  
@@ -471,11 +471,11 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                 sp_rows.append(row1_sp)
                 
                 # Row2: 广告组 (SP)
-                row2_sp = [product_sp, '广告组', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', '', default_bid, '', '', '', '', '', '']
+                row2_sp = [product_sp, '广告组', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', default_bid, '', '', '', '', '', '']
                 sp_rows.append(row2_sp)
                 
                 # Row3: 商品广告 (SP)
-                row3_sp = [product_sp, '商品广告', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', sku, '', '', '', '', '', '', '']
+                row3_sp = [product_sp, '商品广告', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', sku, '', '', '', '', '', '', '']
                 sp_rows.append(row3_sp)
                 
                 # Keywords: fixed column match (skip if ASIN)
@@ -510,7 +510,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     
                     if keywords:
                         for kw in keywords:
-                            row_keyword_sp = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', '', '', default_bid, kw, match_type, '动态竞价 - 仅降低', '', '', '']
+                            row_keyword_sp = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', default_bid, kw, match_type, '', '', '', '']
                             sp_rows.append(row_keyword_sp)
                     else:
                         # Original single row
@@ -571,7 +571,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                             if kws:
                                 st.write(f"  {m_type} 否定关键词数量: {len(kws)}")
                             for kw in kws:
-                                row_neg_sp = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', '', '', '', kw, m_type, '动态竞价 - 仅降低', '', '', '']
+                                row_neg_sp = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', kw, m_type, '', '', '', '']
                                 sp_rows.append(row_neg_sp)
                 
                 # ASIN group: generate 商品定向 and 否定商品定向 (SP only neg_asin, no neg_brand)
@@ -594,7 +594,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     
                     # 否定商品定向: from global neg_asin only (no neg_brand for SP)
                     for neg in neg_asin:
-                        row_neg_product_sp = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', '', '', '', '', '', status, '', '', '', '', '', '', '动态竞价 - 仅降低', '', '', f'asin="{neg}"']
+                        row_neg_product_sp = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product_sp)
                         
             else:
