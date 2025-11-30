@@ -467,7 +467,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                 budget_type = global_settings.get('budget_type', '每日')
                 
                 # Row1: 广告活动 (SP)
-                row1_sp = [product_sp, '广告活动', operation, campaign_name, '', '', '', '', '', campaign_name, '', '', '', '手动', status, budget, '', '', '', '', '动态竞价 - 仅降低', '', '', '']
+                row1_sp = [product_sp, '广告活动', operation, campaign_name, '', '', '', '', '', campaign_name, '', '', '', '手动', status, budget, '', '', '', '', '', '动态竞价 - 仅降低', '', '', '']
                 sp_rows.append(row1_sp)
                 
                 # Row2: 广告组 (SP)
