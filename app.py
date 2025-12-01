@@ -256,6 +256,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                 cpc_col = None
                 sku_col = None
                 budget_col = None
+                group_bid_col = None  # 新加：声明变量，找“广告组默认竞价”列
                 
                 for col_idx, col_name in enumerate(activity_df.columns):
                     col_str = str(col_name).strip()
@@ -267,6 +268,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                         sku_col = col_idx
                     elif col_str == '预算':
                         budget_col = col_idx
+                    elif col_str == '广告组默认竞价':  # 新加：找这个列的位置 
+                        group_bid_col = col_idx  # 存索引
                 
                 campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else str(row.iloc[1]).strip()
                 if not campaign_name or campaign_name.lower() == 'nan' or any(global_key in campaign_name for global_key in ['品牌实体编号', '品牌名称', '预算类型', '创意素材标题', '落地页 URL']):
@@ -282,6 +285,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     'cpc': cpc,
                     'sku': sku,
                     'budget': budget
+                    'group_bid': group_bid  # 新加：存到字典里，供后面用
                 })
         else:
             # 原 SB/SBV 逻辑（保持不变）
@@ -471,7 +475,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                 sp_rows.append(row1_sp)
                 
                 # Row2: 广告组 (SP)
-                row2_sp = [product_sp, '广告组', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', default_bid, '', '', '', '', '', '']
+                row2_sp = [product_sp, '广告组', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', activity['group_bid'], '', '', '', '', '', '']
                 sp_rows.append(row2_sp)
                 
                 # Row3: 商品广告 (SP)
@@ -589,7 +593,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     
                     if asin_targets:
                         for asin in asin_targets:
-                            row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', default_bid, '', '', '', '', '', f'asin="{asin}"']
+                            row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
                             sp_rows.append(row_product_target_sp)
                     
                     # 否定商品定向: from global neg_asin only (no neg_brand for SP)
