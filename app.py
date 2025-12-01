@@ -284,7 +284,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                     'campaign_name': campaign_name,
                     'cpc': cpc,
                     'sku': sku,
-                    'budget': budget
+                    'budget': budget,
                     'group_bid': group_bid  # 新加：存到字典里，供后面用
                 })
         else:
