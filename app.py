@@ -12,7 +12,7 @@ import os
 st.title("批量广告上传模版-生成工具")
 st.markdown("""
 ### 代码内容说明
-此工具用于从上传的 Excel 文件（默认 sheet: '品牌广告'）中提取全局设置、活动数据和关键词信息，生成广告 Header 文件。  
+此工具用于从上传的 Excel 文件（默认 sheet: '广告模版'）中提取全局设置、活动数据和关键词信息，生成广告 Header 文件。  
 **主要功能：**  
 - 支持（品牌旗舰店、商品集、商品详情页、SP-商品推广）主题的动态区域检测和数据提取。  
 - 处理广告活动、广告组、视频/商品集广告、关键词、否定关键词、商品定向等行生成。  
@@ -21,9 +21,9 @@ st.markdown("""
 - 输出多Sheet工作簿：'品牌广告' Sheet (SB/SBV) 和 'SP-商品推广' Sheet (SP)，每个有独立列头。  
 
 **使用步骤：**  
-1. 上传 Excel 文件（文件名任意，需包含 '品牌广告' sheet）。  
+1. 上传 Excel 文件（文件名任意，需包含 '广告模版' sheet）。  
 2. 点击 "生成 Header 文件" 按钮。  
-3. 下载生成的 "header-品牌 YYYY-MM-DD HH:MM.xlsx" 文件。  
+3. 下载生成的 "header-YYYY-MM-DD HH:MM.xlsx" 文件。  
 
 **注意：**  
 - 文件需符合脚本预期结构（A 列主题行、B 列活动名称等）。  
@@ -829,7 +829,7 @@ if uploaded_file is not None:
                 # Generate filename with current time (precise to minute)
                 now = datetime.now()
                 timestamp = now.strftime("%Y-%m-%d %H:%M")
-                filename = f"header-品牌 {timestamp}.xlsx"
+                filename = f"header-{timestamp}.xlsx"
                 
                 st.download_button(
                     label="下载生成的 Header 文件",
