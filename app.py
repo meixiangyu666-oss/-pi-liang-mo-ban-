@@ -248,7 +248,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
 
         # 用activity_df构建activity_rows列表，根据主题不同提取不同
         activity_rows = []
-        
+        if 'SP-商品推广' in target_theme:
             # SP 逻辑：动态查找列名索引，类似SB但调整为SP字段
             for idx, row in activity_df.iterrows():
                 # 动态获取列索引 for SP
