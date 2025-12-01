@@ -278,6 +278,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告
                 cpc = row.iloc[cpc_col] if cpc_col is not None else row.iloc[2] if len(row) > 2 else default_bid
                 sku = str(row.iloc[sku_col]).strip() if sku_col is not None else 'SKU-1'  # Default SKU-1
                 budget = row.iloc[budget_col] if budget_col is not None else default_sp_budget
+                group_bid = row.iloc[group_bid_col] if group_bid_col is not None else default_bid  # 加这一行：取值，空用0.6
                 
                 activity_rows.append({
                     'index': idx,
