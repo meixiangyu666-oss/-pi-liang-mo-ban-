@@ -35,7 +35,7 @@ st.markdown("""
 uploaded_file = st.file_uploader("上传 Excel 文件", type=['xlsx', 'xls'])
 
 # Function from the original script (copied and adapted)
-def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='品牌广告'):
+def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版'):
     # Create a temporary file from bytes
     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
         tmp.write(uploaded_bytes)
