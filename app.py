@@ -630,8 +630,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         ad_position, percentage, ''
                     ]
                     sp_rows.append(row_bid_adjust)
-                    else:
-                        st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
+                else:
+                    st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
 
             else:
                 # Original Brand (SB/SBV) generation logic
