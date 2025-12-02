@@ -591,47 +591,48 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 row_neg_sp = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', kw, m_type, '', '', '', '']
                                 sp_rows.append(row_neg_sp)
                 
-                # ASIN group: generate 商品定向 and 否定商品定向 (SP only neg_asin, no neg_brand)
-                if is_asin:
-                    # 商品定向: exact column match to campaign_name
-                    asin_targets = []
-                    for col in df_survey.columns:
-                        if str(col).strip() == str(campaign_name):
-                            col_idx = df_survey.columns.get_loc(col)
-                            if col_idx is not None:
-                                asin_targets = [str(asin).strip() for asin in df_survey.iloc[:, col_idx].dropna() if str(asin).strip()]
-                                asin_targets = list(dict.fromkeys(asin_targets))
-                                st.write(f"  商品定向 ASIN 数量: {len(asin_targets)} (示例: {asin_targets[:2] if asin_targets else '无'})")
-                                break
+            # ASIN group: generate 商品定向 and 否定商品定向 (SP only neg_asin, no neg_brand)
+            if is_asin:
+                # 商品定向: exact column match to campaign_name
+                asin_targets = []
+                for col in df_survey.columns:
+                    if str(col).strip() == str(campaign_name):
+                        col_idx = df_survey.columns.get_loc(col)
+                        if col_idx is not None:
+                            asin_targets = [str(asin).strip() for asin in df_survey.iloc[:, col_idx].dropna() if str(asin).strip()]
+                            asin_targets = list(dict.fromkeys(asin_targets))
+                            st.write(f"  商品定向 ASIN 数量: {len(asin_targets)} (示例: {asin_targets[:2] if asin_targets else '无'})")
+                            break
                     
-                    if asin_targets:
-                        for asin in asin_targets:
-                            row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
-                            sp_rows.append(row_product_target_sp)
+                if asin_targets:
+                    for asin in asin_targets:
+                        row_product_target_sp = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
+                        sp_rows.append(row_product_target_sp)
                     
-                    # 否定商品定向: from global neg_asin only (no neg_brand for SP)
-                    for neg in neg_asin:
-                        row_neg_product_sp = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
-                        sp_rows.append(row_neg_product_sp)
+                # 否定商品定向: from global neg_asin only (no neg_brand for SP)
+                for neg in neg_asin:
+                    row_neg_product_sp = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
+                    sp_rows.append(row_neg_product_sp)
 
-                    # 新增：竞价调整层级（仅SP，条件生成1行/活动）
-                    ad_position = activity.get('ad_position', '').strip()
-                    percentage = activity.get('percentage', '').strip()
-                    if ad_position and percentage:  # 只有两者都有值才生成
-                        st.write(f"  生成竞价调整行 (活动: {campaign_name}, 广告位: {ad_position}, 百分比: {percentage})")
-                        row_bid_adjust = [
-                        product_sp, '竞价调整', operation,  # 0-2: 产品/实体层级/操作
-                        campaign_name, campaign_name, '', '', '', '',  # 3-9: 广告活动编号/广告组编号/.../商品投放 ID (广告组编号设为campaign_name以匹配描述)
-                        campaign_name, campaign_name, '', '',  # 10-12: 广告活动名称/广告组名称/开始日期/结束日期
-                        '手动', status,  # 13-14: 投放类型/状态
-                        '', '', '', '', '', '',  # 15-20: 每日预算/SKU/广告组默认竞价/竞价/关键词文本/匹配类型
-                        '动态竞价 - 仅降低',  # 21: 竞价方案
-                        ad_position, percentage, ''  # 22-24: 广告位/百分比/拓展商品投放编号
+            # 新增/修复：竞价调整层级（仅SP，为每个活动生成1行，如果条件满足）- 移到if is_asin外
+                row_bid_adjust = None  # 防护：初始化为空，避免UnboundLocalError
+                ad_position = activity.get('ad_position', '').strip()
+                percentage = activity.get('percentage', '').strip()
+                if ad_position and percentage:  # 只有两者都有值才生成
+                    st.write(f"  生成竞价调整行 (活动: {campaign_name}, 广告位: {ad_position}, 百分比: {percentage})")
+                    row_bid_adjust = [
+                        product_sp, '竞价调整', operation,
+                        campaign_name, '', '', '', '', '', '',
+                        campaign_name, '', '', '',
+                        '手动', status,
+                        '', '', '', '', '', '',
+                        '动态竞价 - 仅降低',
+                        ad_position, percentage, ''
                     ]
-                    sp_rows.append(row_bid_adjust)
-                else:
-                    st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
-       
+                        sp_rows.append(row_bid_adjust)
+                    else:
+                        st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
+
             else:
                 # Original Brand (SB/SBV) generation logic
                 cpc = float(activity['cpc']) if pd.notna(activity['cpc']) and activity['cpc'] != '' else default_bid
