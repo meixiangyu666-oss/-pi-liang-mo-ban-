@@ -511,8 +511,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     st.write(f"  生成竞价调整行 (活动: {campaign_name}, 广告位: {ad_position}, 百分比: {percentage})")
                     row_bid_adjust = [
                         product_sp, '竞价调整', operation,
-                        campaign_name, '', '', '', '', '', '',
-                        campaign_name, '', '', '',
+                        campaign_name, '', '', '', '', '',
+                        campaign_name, campaign_name, '', '',
                         '手动', status,
                         '', '', '', '', '', '',
                         '动态竞价 - 仅降低',
