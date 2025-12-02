@@ -629,7 +629,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         '动态竞价 - 仅降低',
                         ad_position, percentage, ''
                     ]
-                        sp_rows.append(row_bid_adjust)
+                    sp_rows.append(row_bid_adjust)
                     else:
                         st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
 
