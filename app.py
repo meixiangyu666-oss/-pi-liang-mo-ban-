@@ -459,6 +459,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         for activity in activity_rows:
             campaign_name = activity['campaign_name']
             st.write(f"处理活动 ({target_theme}): {campaign_name}")
+
+            is_asin = False
             
             if 'SP-商品推广' in target_theme:
                 # SP-specific generation
