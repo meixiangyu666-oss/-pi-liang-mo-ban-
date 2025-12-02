@@ -462,6 +462,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             
             if 'SP-商品推广' in target_theme:
                 # SP-specific generation
+                campaign_name = activity['campaign_name']
                 cpc = float(activity['cpc']) if pd.notna(activity['cpc']) and activity['cpc'] != '' else default_bid
                 budget = float(activity['budget']) if pd.notna(activity['budget']) and activity['budget'] != '' else default_sp_budget
                 sku = activity.get('sku', 'SKU-1')
