@@ -257,6 +257,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 sku_col = None
                 budget_col = None
                 group_bid_col = None  # 新加：声明变量，找“广告组默认竞价”列
+                ad_position_col = None  # 新增：广告位列索引
+                percentage_col = None   # 新增：百分比列索引
                 
                 for col_idx, col_name in enumerate(activity_df.columns):
                     col_str = str(col_name).strip()
@@ -270,6 +272,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         budget_col = col_idx
                     elif col_str == '广告组默认竞价':  # 新加：找这个列的位置 
                         group_bid_col = col_idx  # 存索引
+                    elif '广告位' in col_str:  # 新增：查找包含“广告位”的列
+                        ad_position_col = col_idx
+                    elif '百分比' in col_str:  # 新增：查找包含“百分比”的列
+                        percentage_col = col_idx
                 
                 campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else str(row.iloc[1]).strip()
                 if not campaign_name or campaign_name.lower() == 'nan' or any(global_key in campaign_name for global_key in ['品牌实体编号', '品牌名称', '预算类型', '创意素材标题', '落地页 URL']):
@@ -279,6 +285,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 sku = str(row.iloc[sku_col]).strip() if sku_col is not None else 'SKU-1'  # Default SKU-1
                 budget = row.iloc[budget_col] if budget_col is not None else default_sp_budget
                 group_bid = row.iloc[group_bid_col] if group_bid_col is not None else default_bid  # 加这一行：取值，空用0.6
+
+                # 新增：提取广告位和百分比值（针对该行）
+                ad_position = str(row.iloc[ad_position_col]).strip() if ad_position_col is not None else ''
+                percentage = str(row.iloc[percentage_col]).strip() if percentage_col is not None else ''
                 
                 activity_rows.append({
                     'index': idx,
@@ -287,6 +297,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     'sku': sku,
                     'budget': budget,
                     'group_bid': group_bid  # 新加：存到字典里，供后面用
+                    'ad_position': ad_position,  # 新增：存广告位值
+                    'percentage': percentage     # 新增：存百分比值
                 })
         else:
             # 原 SB/SBV 逻辑（保持不变）
@@ -601,7 +613,25 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     for neg in neg_asin:
                         row_neg_product_sp = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product_sp)
-                        
+
+                    # 新增：竞价调整层级（仅SP，条件生成1行/活动）
+                    ad_position = activity.get('ad_position', '').strip()
+                    percentage = activity.get('percentage', '').strip()
+                    if ad_position and percentage:  # 只有两者都有值才生成
+                        st.write(f"  生成竞价调整行 (活动: {campaign_name}, 广告位: {ad_position}, 百分比: {percentage})")
+                        row_bid_adjust = [
+                        product_sp, '竞价调整', operation,  # 0-2: 产品/实体层级/操作
+                        campaign_name, campaign_name, '', '', '', '',  # 3-9: 广告活动编号/广告组编号/.../商品投放 ID (广告组编号设为campaign_name以匹配描述)
+                        campaign_name, campaign_name, '', '',  # 10-12: 广告活动名称/广告组名称/开始日期/结束日期
+                        '手动', status,  # 13-14: 投放类型/状态
+                        '', '', '', '', '', '',  # 15-20: 每日预算/SKU/广告组默认竞价/竞价/关键词文本/匹配类型
+                        '动态竞价 - 仅降低',  # 21: 竞价方案
+                        ad_position, percentage, ''  # 22-24: 广告位/百分比/拓展商品投放编号
+                    ]
+                    sp_rows.append(row_bid_adjust)
+                else:
+                    st.write(f"  跳过竞价调整行 (活动: {campaign_name})：广告位或百分比为空")
+       
             else:
                 # Original Brand (SB/SBV) generation logic
                 cpc = float(activity['cpc']) if pd.notna(activity['cpc']) and activity['cpc'] != '' else default_bid
