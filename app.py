@@ -296,7 +296,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     'cpc': cpc,
                     'sku': sku,
                     'budget': budget,
-                    'group_bid': group_bid  # 新加：存到字典里，供后面用
+                    'group_bid': group_bid,  # 新加：存到字典里，供后面用
                     'ad_position': ad_position,  # 新增：存广告位值
                     'percentage': percentage     # 新增：存百分比值
                 })
