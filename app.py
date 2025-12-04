@@ -489,13 +489,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     if asin_targets:
                         for asin in asin_targets:
                             row_product_target = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                                  '', '', '', cpc, '', '', '', f'asin="{asin}"', '', '']
+                                                  '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
                             sp_rows.append(row_product_target)
                     
                     # 否定商品定向: from global neg_asin and neg_brand
                     for neg in neg_asin:
                         row_neg_product = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                           '', '', '', '', '', '', '', f'asin="{neg}"', '', '']
+                                           '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product)
                     
                     for negb in neg_brand:
@@ -668,7 +668,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 # ASIN group: generate 商品定向 and 否定商品定向
                 if is_asin:
                     # 商品定向: exact column match to campaign_name
-                    asin_targets = []
+                    sin_targets = []
                     for col in df_survey.columns:
                         if str(col).strip() == str(campaign_name):
                             col_idx = df_survey.columns.get_loc(col)
