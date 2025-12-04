@@ -563,13 +563,11 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         '', '', '', '', '', '', '', '', landing_url_for_row, landing_type, brand_name_for_row, 'False', logo_asset, creative_title, asins_str, video_asset, custom_image]
                 brand_rows.append(row3)
                 
-                # Keywords: fixed column match (skip if ASIN), with regional column selection
+                # Keywords: fixed column match (skip if ASIN)
                 if not is_asin:
                     keywords = []
                     matched_columns = []
                     keyword_col_idx = None
-
-                    # 先用原规则选择基础索引
                     if matched_category in ['suzhu', '宿主', 'host']:
                         if is_exact:
                             keyword_col_idx = 11  # L列: suzhu/宿主/host-精准词
@@ -581,27 +579,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         elif is_broad:
                             keyword_col_idx = 14  # O列: case/包-广泛词
                     
-                    # 区域化调整: 对于Brand主题的广泛组，用新列 (G/N)
-                    brand_themes = ['SBV落地页：品牌旗舰店', 'SB落地页：商品集', 'SBV落地页：商品详情页']
-                    if (is_broad and target_theme in brand_themes and 
-                        matched_category in ['suzhu', '宿主', 'host', 'case', '包']):
-        
-                        if matched_category in ['suzhu', '宿主', 'host']:
-                            # 用G列: suzhu/宿主/host-广泛词带加号
-                            new_col_name = 'suzhu/宿主/host -广泛词带加号'
-                            new_idx = df_survey.columns.get_loc(new_col_name) if new_col_name in df_survey.columns else None
-                            if new_idx is not None:
-                                keyword_col_idx = new_idx
-                                st.write(f"  区域化: 使用新列 '{new_col_name}' (索引 {new_idx}) for {target_theme} broad host")
-                        elif matched_category in ['case', '包']:
-                            # 用N列: case/包-广泛词带加号 (注意: 如果N原为13, get_loc会动态取)
-                            new_col_name = 'case/包-广泛词带加号'
-                            new_idx = df_survey.columns.get_loc(new_col_name) if new_col_name in df_survey.columns else None
-                            if new_idx is not None:
-                                keyword_col_idx = new_idx
-                                st.write(f"  区域化: 使用新列 '{new_col_name}' (索引 {new_idx}) for {target_theme} broad case")
-                    
-                    # 提取数据 (统一处理)
                     if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
                         keywords = list(dict.fromkeys(col_data))
@@ -609,17 +586,20 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         st.write(f"  匹配的列: {matched_columns}")
                         st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
                     else:
-                        # 无列可用: 跳过 (无fallback)
-                        keywords = []
+                        # Fallback to original hardcode style
+                        try:
+                            positive_kw_index = header_row_full.index('case/包-精准词')
+                            keywords = [header_row_full[positive_kw_index]]  # Single kw?
+                        except:
+                            keywords = []
                     
                     if keywords:
-                        st.write(f"  生成 {len(keywords)} 个关键词行 (活动: {campaign_name})")
                         for kw in keywords:
                             row_keyword = [product_brand, '关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
-                                            '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '']
+                                           '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_keyword)
                     else:
-                        st.warning(f"  无关键词数据（新列不存在或为空），跳过生成关键词层级 (活动: {campaign_name}, 主题: {target_theme})")
+                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
                     
                     # Negative keywords: dynamic like test SB.py, with specific column selection
                     if matched_category:
