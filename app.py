@@ -546,12 +546,12 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 match_type = '精准' if is_exact else '广泛' if is_broad else '精准'
                 
                 # Row1: 广告活动
-                row1 = [product_brand, '广告活动', operation, '', '', '', campaign_name, '', '', status, 
+                row1 = [product_brand, '广告活动', operation, campaign_name, '', '', campaign_name, '', '', status, 
                         global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), 12, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '']
                 brand_rows.append(row1)
                 
                 # Row2: 广告组
-                row2 = [product_brand, '广告组', operation, '', campaign_name, '', campaign_name, campaign_name, '', status, 
+                row2 = [product_brand, '广告组', operation, campaign_name, campaign_name, '', campaign_name, campaign_name, '', status, 
                         '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
                 brand_rows.append(row2)
                 
