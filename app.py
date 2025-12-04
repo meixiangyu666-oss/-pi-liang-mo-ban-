@@ -69,13 +69,14 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     df_survey.columns = [str(c).strip() for c in df_survey.columns]
     st.write(f"列名列表 (stripped): {list(df_survey.columns)}")  # Debug log
     
-    # 新加：动态区域检测函数
+    # 新加：动态区域检测函数 (FIX: strip val for robust match)
     def find_region_start_end(df, target_theme):
         """扫描A列找到主题行，返回 (header_row, end_row) (0-based索引)"""
         theme_row = None
         next_theme_row = None
         for idx, val in enumerate(df.iloc[:, 0]):  # A列 (index 0)
-            if pd.notna(val) and target_theme in str(val).strip():
+            val_str = str(val).strip() if pd.notna(val) else ''  # FIX: strip val
+            if target_theme in val_str:
                 theme_row = idx
                 break
         if theme_row is None:
@@ -83,10 +84,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             return None, None
         
         # 找下一个主题（顺序：详情页 → 旗舰店 → 商品集 → SP）
-        next_themes = ["SBV落地页：品牌旗舰店", "SB落地页：商品集", "SBV落地页：商品详情页", "SP-商品推广"]  # 从当前开始找下一个
+        next_themes = ["SBV落地页：品牌旗舰店", "SB落地页：商品集", "SBV落地页：商品详情页", "SP-商品推广"]
         for idx in range(theme_row + 1, len(df)):
-            val = str(df.iloc[idx, 0]).strip()
-            if any(nt in val for nt in next_themes if nt != target_theme):
+            val_str = str(df.iloc[idx, 0]).strip()  # FIX: strip
+            if any(nt in val_str for nt in next_themes if nt != target_theme):
                 next_theme_row = idx
                 break
         end_row = next_theme_row - 1 if next_theme_row else len(df) - 1  # 到文件末尾
@@ -355,10 +356,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     else:
                         st.warning(f"SP 无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
                 
-                # ASIN for SP
+                # ASIN for SP (placeholder, add if needed)
                 if is_asin:
-                    # ... (original ASIN logic for SP, adapt to output_columns_sp if needed)
-                    pass  # Placeholder, add if SP ASIN needed
+                    # Similar to Brand ASIN, adapt for SP columns
+                    pass
                 
                 # 竞价调整 for SP
                 if percentage and ad_position:
@@ -564,6 +565,11 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     df_brand = df_brand.fillna('')
     df_sp = df_sp.fillna('')
     
+    # FIX: Handle empty sheets - add dummy sheet if no data to avoid IndexError
+    if len(brand_rows) == 0 and len(sp_rows) == 0:
+        st.warning("无数据生成，创建空文件。")
+        df_dummy = pd.DataFrame({'提示': ['无广告数据生成，请检查输入文件主题/活动行。']})
+    
     # Save to BytesIO for download - Multi-sheet
     output_buffer = io.BytesIO()
     with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
@@ -571,6 +577,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             df_brand.to_excel(writer, index=False, sheet_name='品牌广告')
         if not df_sp.empty:
             df_sp.to_excel(writer, index=False, sheet_name='SP-商品推广')
+        if len(brand_rows) == 0 and len(sp_rows) == 0:
+            df_dummy.to_excel(writer, index=False, sheet_name='Summary')  # FIX: Add empty visible sheet
+    
     output_buffer.seek(0)
     
     st.success(f"生成完成！品牌行数：{len(brand_rows)}, SP行数：{len(sp_rows)}")
