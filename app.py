@@ -412,11 +412,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                            '', '', '', cpc, kw, match_type, '', '', '', '']
                             sp_rows.append(row_keyword)
                     else:
-                        # Default keyword row
-                        row_keyword_default = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                               '', '', '', cpc, 'default_kw', match_type, '', '', '', '']
-                        sp_rows.append(row_keyword_default)
-                    
+                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
+                        
                     # Negative keywords: similar to Brand
                     if matched_category:
                         selected_cols = []
@@ -489,13 +486,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     if asin_targets:
                         for asin in asin_targets:
                             row_product_target = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                                  '', '', '', cpc, '', '', '', f'asin="{asin}"', '', '']
+                                                  '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
                             sp_rows.append(row_product_target)
                     
                     # 否定商品定向: from global neg_asin and neg_brand
                     for neg in neg_asin:
                         row_neg_product = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                           '', '', '', '', '', '', '', f'asin="{neg}"', '', '']
+                                           '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product)
                     
                     for negb in neg_brand:
@@ -549,12 +546,14 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 match_type = '精准' if is_exact else '广泛' if is_broad else '精准'
                 
                 # Row1: 广告活动
-                campaign_id_placeholder = f"campaign-{campaign_name[:10]}"  # e.g., 'campaign-test su'
-                row1 = [product_brand, '广告活动', operation, campaign_id_placeholder, campaign_name, ...]
+                row1 = [product_brand, '广告活动', operation, '', '', '', campaign_name, '', '', status, 
+                        global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), 12, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '']
+                brand_rows.append(row1)
                 
                 # Row2: 广告组
-                group_id_placeholder = f"adgroup-{campaign_name[:10]}"
-                row2 = [product_brand, '广告组', operation, campaign_id_placeholder, group_id_placeholder, ...]
+                row2 = [product_brand, '广告组', operation, '', campaign_name, '', campaign_name, campaign_name, '', status, 
+                        '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+                brand_rows.append(row2)
                 
                 # Row3: Video/商品集广告
                 landing_url_for_row = '' if video_entity_level == '视频广告' else landing_url
@@ -600,10 +599,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                            '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_keyword)
                     else:
-                        # Original single row
-                        row4 = [product_brand, '关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
-                                '', '', '', '', cpc, 'default_kw', match_type, '', '', '', '', '', '', '', '', '', '']
-                        brand_rows.append(row4)
+                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
                     
                     # Negative keywords: dynamic like test SB.py, with specific column selection
                     if matched_category:
@@ -666,7 +662,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 # ASIN group: generate 商品定向 and 否定商品定向
                 if is_asin:
                     # 商品定向: exact column match to campaign_name
-                    asin_targets = []
+                    sin_targets = []
                     for col in df_survey.columns:
                         if str(col).strip() == str(campaign_name):
                             col_idx = df_survey.columns.get_loc(col)
