@@ -385,22 +385,47 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 sp_rows.append(row3)
                 
                 if not is_asin:
-                    # Keywords: similar to Brand, extract from global df_survey columns
-                    keywords = []
-                    if matched_category in ['suzhu', '宿主', 'host']:
-                        if is_exact:
-                            keyword_col_idx = 11  # L列
-                        elif is_broad:
-                            keyword_col_idx = 12  # M列
+                    # Keywords: dynamic column selection based on region rules
+                        keywords = []
+                        keyword_col_idx = None
+                        col_name = None  # For logging
+                        
+                        if match_type == '精准':
+                            if matched_category in ['suzhu', '宿主', 'host']:
+                                col_name = 'suzhu/宿主/host -精准词'
+                            elif matched_category in ['case', '包']:
+                                col_name = 'case/包-精准词'
+                        elif match_type == '广泛':
+                            # SP: original rules
+                            if matched_category in ['suzhu', '宿主', 'host']:
+                                col_name = 'suzhu/宿主/host -广泛词'
+                            elif matched_category in ['case', '包']:
+                                col_name = 'case/包-广泛词'
+                        
+                        if col_name:
+                            try:
+                                keyword_col_idx = df_survey.columns.get_loc(col_name)
+                            except KeyError:
+                                st.warning(f"列 '{col_name}' 未找到，fallback到硬编码")
+                                # Fallback: original indices (adjust if needed)
+                                if '精准' in match_type and matched_category in ['suzhu', '宿主', 'host']:
+                                    keyword_col_idx = 11
+                                elif '广泛' in match_type and matched_category in ['suzhu', '宿主', 'host']:
+                                    keyword_col_idx = 12
+                                elif '精准' in match_type and matched_category in ['case', '包']:
+                                    keyword_col_idx = 14  # Adjusted for your test file
+                                elif '广泛' in match_type and matched_category in ['case', '包']:
+                                    keyword_col_idx = 15  # Adjusted for your test file
+    
+                        if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
+                            col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
+                            keywords = list(dict.fromkeys(col_data))
+                            col_name = str(df_survey.columns[keyword_col_idx]) if col_name is None else col_name
+                            st.write(f"  匹配的列: {col_name} (idx={keyword_col_idx})")
+                            st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
                         else:
-                            keyword_col_idx = None
-                    elif matched_category in ['case', '包']:
-                        if is_exact:
-                            keyword_col_idx = 13  # N列
-                        elif is_broad:
-                            keyword_col_idx = 14  # O列
-                        else:
-                            keyword_col_idx = None
+                            keywords = []
+                            st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
                     
                     if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
@@ -563,36 +588,55 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         '', '', '', '', '', '', '', '', landing_url_for_row, landing_type, brand_name_for_row, 'False', logo_asset, creative_title, asins_str, video_asset, custom_image]
                 brand_rows.append(row3)
                 
-                # Keywords: fixed column match (skip if ASIN)
+                # Keywords: dynamic column selection based on region rules
                 if not is_asin:
                     keywords = []
-                    matched_columns = []
                     keyword_col_idx = None
-                    if matched_category in ['suzhu', '宿主', 'host']:
-                        if is_exact:
-                            keyword_col_idx = 11  # L列: suzhu/宿主/host-精准词
-                        elif is_broad:
-                            keyword_col_idx = 12  # M列: suzhu/宿主/host-广泛词
-                    elif matched_category == 'case':
-                        if is_exact:
-                            keyword_col_idx = 13  # N列: case/包-精准词
-                        elif is_broad:
-                            keyword_col_idx = 14  # O列: case/包-广泛词
+                    col_name = None  # For logging
+                    
+                    if match_type == '精准':
+                        # All regions: original precise rules
+                        if matched_category in ['suzhu', '宿主', 'host']:
+                            col_name = 'suzhu/宿主/host -精准词'
+                        elif matched_category in ['case', '包']:
+                            col_name = 'case/包-精准词'
+                    elif match_type == '广泛':
+                        # SB/SBV: new rules (G for case, N for suzhu)
+                        if matched_category in ['suzhu', '宿主', 'host']:
+                            col_name = 'suzhu/宿主/host -广泛词带加号'  # N列
+                        elif matched_category in ['case', '包']:
+                            # G列: assume header is empty, use direct index; change to string if you set header
+                            try:
+                                keyword_col_idx = df_survey.columns.get_loc('case广泛自定义')  # If you set this header
+                            except KeyError:
+                                keyword_col_idx = 6  # Hardcode G列 index (Unnamed:6 in your file)
+                            col_name = str(df_survey.columns[6]) if keyword_col_idx == 6 else 'case广泛自定义'
+                    
+                    if col_name and keyword_col_idx is None:  # Only if not already set for G
+                        try:
+                            keyword_col_idx = df_survey.columns.get_loc(col_name)
+                        except KeyError:
+                            st.warning(f"列 '{col_name}' 未找到，fallback到硬编码")
+                            # Fallback: original indices (adjust for your test file)
+                            if '精准' in match_type and matched_category in ['suzhu', '宿主', 'host']:
+                                keyword_col_idx = 11
+                            elif '广泛' in match_type and matched_category in ['suzhu', '宿主', 'host']:
+                                keyword_col_idx = 12  # Or 13 for N if fallback
+                            elif '精准' in match_type and matched_category in ['case', '包']:
+                                keyword_col_idx = 14
+                            elif '广泛' in match_type and matched_category in ['case', '包']:
+                                keyword_col_idx = 15  # Or 6 for G
                     
                     if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
                         keywords = list(dict.fromkeys(col_data))
-                        matched_columns = [df_survey.columns[keyword_col_idx]]
-                        st.write(f"  匹配的列: {matched_columns}")
+                        col_name = str(df_survey.columns[keyword_col_idx]) if col_name is None else col_name
+                        st.write(f"  匹配的列: {col_name} (idx={keyword_col_idx})")
                         st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
                     else:
-                        # Fallback to original hardcode style
-                        try:
-                            positive_kw_index = header_row_full.index('case/包-精准词')
-                            keywords = [header_row_full[positive_kw_index]]  # Single kw?
-                        except:
-                            keywords = []
-                    
+                        keywords = []
+                        st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
+              
                     if keywords:
                         for kw in keywords:
                             row_keyword = [product_brand, '关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
