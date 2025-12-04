@@ -412,11 +412,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                            '', '', '', cpc, kw, match_type, '', '', '', '']
                             sp_rows.append(row_keyword)
                     else:
-                        # Default keyword row
-                        row_keyword_default = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                               '', '', '', cpc, 'default_kw', match_type, '', '', '', '']
-                        sp_rows.append(row_keyword_default)
-                    
+                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
+                        
                     # Negative keywords: similar to Brand
                     if matched_category:
                         selected_cols = []
@@ -602,10 +599,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                            '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_keyword)
                     else:
-                        # Original single row
-                        row4 = [product_brand, '关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
-                                '', '', '', '', cpc, 'default_kw', match_type, '', '', '', '', '', '', '', '', '', '']
-                        brand_rows.append(row4)
+                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
                     
                     # Negative keywords: dynamic like test SB.py, with specific column selection
                     if matched_category:
