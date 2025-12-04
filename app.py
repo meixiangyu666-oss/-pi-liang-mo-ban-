@@ -427,17 +427,17 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             keywords = []
                             st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
                     
-                    if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
-                        col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
-                        keywords = list(dict.fromkeys(col_data))
-                    
-                    if keywords:
-                        for kw in keywords:
-                            row_keyword = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                           '', '', '', cpc, kw, match_type, '', '', '', '']
-                            sp_rows.append(row_keyword)
-                    else:
-                        st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
+                        if keyword_col_idx is not None and keyword_col_idx < len(df_survey.columns):
+                            col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
+                            keywords = list(dict.fromkeys(col_data))
+                        
+                        if keywords:
+                            for kw in keywords:
+                                row_keyword = [product_sp, '关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
+                                            '', '', '', cpc, kw, match_type, '', '', '', '']
+                                sp_rows.append(row_keyword)
+                        else:
+                            st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
                         
                     # Negative keywords: similar to Brand
                     if matched_category:
