@@ -36,14 +36,14 @@ uploaded_file = st.file_uploader("上传 Excel 文件", type=['xlsx', 'xls'])
 
 # 新增：提前提取 neg_brand 以决定是否显示询问
 generate_sp_neg_brand = True  # 默认 True
-if uploaded_file is not None:
+if uploaded_bytes is not None:  # 用 uploaded_bytes 检查
     # 临时读取文件以检查 neg_brand
     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-        tmp.write(uploaded_file.read())
+        tmp.write(uploaded_bytes)  # 用预保存的 bytes
         input_file_temp = tmp.name
     
     try:
-        df_survey_temp = pd.read_excel, engine='openpyxl'(input_file_temp, sheet_name='广告模版', header=0)
+        df_survey_temp = pd.read_excel(input_file_temp, sheet_name='广告模版', header=0, engine='openpyxl')
         df_survey_temp = df_survey_temp.fillna('')
         
         # 提取 neg_brand
@@ -65,9 +65,13 @@ if uploaded_file is not None:
     
     except Exception as e:
         st.error(f"临时读取文件时出错：{e}")
-        os.unlink(input_file_temp)
+        generate_sp_neg_brand = False  # 出错时默认不生成
     finally:
-        os.unlink(input_file_temp)
+        try:
+            if os.path.exists(input_file_temp):  # 安全检查文件存在
+                os.unlink(input_file_temp)
+        except Exception as unlink_e:
+            st.warning(f"临时文件删除失败（忽略）：{unlink_e}")
 
 # Function from the original script (copied and adapted)
 def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版', generate_sp_neg_brand=True):
