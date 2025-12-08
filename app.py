@@ -524,7 +524,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             row_neg_brand = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
                                             '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
                             sp_rows.append(row_neg_brand)
-                                        sp_rows.append(row_neg_brand)
                 
                 # 新增/修复：竞价调整层级（仅SP，为每个活动生成1行，如果条件满足）- 移到if is_asin外
                 row_bid_adjust = None  # 防护：初始化为空，避免UnboundLocalError
