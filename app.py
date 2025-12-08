@@ -83,13 +83,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
 
     # 先找主题行，用于限全局设置范围（取第一个主题前）
     temp_result = find_region_start_end(df_survey, 'SBV落地页：品牌旗舰店')
-    if temp_result[0] is None:
+    if temp_result is None or len(temp_result) == 0 or temp_result[0] is None:
         temp_result = find_region_start_end(df_survey, 'SB落地页：商品集')
-    if temp_result[0] is None:
+    if temp_result is None or len(temp_result) == 0 or temp_result[0] is None:
         temp_result = find_region_start_end(df_survey, 'SBV落地页：商品详情页')
-    if temp_result[0] is None:
+    if temp_result is None or len(temp_result) == 0 or temp_result[0] is None:
         temp_result = find_region_start_end(df_survey, 'SP-商品推广')
-    if temp_result[0] is None:
+    if temp_result is None or len(temp_result) == 0 or temp_result[0] is None:
         st.error("未找到任何支持的主题区域")
         os.unlink(input_file)
         return None
