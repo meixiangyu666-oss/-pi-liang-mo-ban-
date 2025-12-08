@@ -278,7 +278,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                 cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
                 sku = str(row.iloc[sku_col]).strip() if sku_col is not None else ''
-                budget = str(row.iloc[budget_col]).strip() if budget_col is not None else ''
+                budget_str = str(row.iloc[budget_col]).strip() if budget_col is not None else ''
+                st.write(f"  SP: {campaign_name} (CPC={cpc}, 预算={budget_str})")
                 group_bid = str(row.iloc[group_bid_col]).strip() if group_bid_col is not None else ''
                 ad_position = str(row.iloc[ad_position_col]).strip() if ad_position_col is not None else ''
                 percentage = str(int(float(row.iloc[percentage_col]))) if percentage_col is not None and pd.notna(row.iloc[percentage_col]) and row.iloc[percentage_col] != '' else ''
