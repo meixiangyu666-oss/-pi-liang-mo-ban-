@@ -746,12 +746,12 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 df_sp.to_excel(writer, index=False, sheet_name='SP-商品推广')
         output_buffer.seek(0)
         
-        st.success(f"生成完成！品牌行数：{len(brand_rows)}, SP行数：{len(sp_rows)}")
+    st.success(f"生成完成！品牌行数：{len(brand_rows)}, SP行数：{len(sp_rows)}")
         
-        # Cleanup temp file
-        os.unlink(input_file)
+    # Cleanup temp file
+    os.unlink(input_file)
         
-        return output_buffer
+    return output_buffer
 
 # Generate Button
 if uploaded_file is not None:
