@@ -45,7 +45,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         # Read the entire file, header=0
         df_survey = pd.read_excel(input_file, sheet_name=sheet_name, header=0)
         st.write(f"成功读取文件，数据形状：{df_survey.shape}")
-        with st.expander("查看详细日志", expanded=False):  # 默认折叠
+        with st.expander("查看详细日志", expanded=False):  # 只保留第一个，用于列名
             st.write(f"列名列表: {list(df_survey.columns)}")
     except FileNotFoundError:
         st.error(f"错误：未找到文件。请确保文件包含 '{sheet_name}' sheet。")
