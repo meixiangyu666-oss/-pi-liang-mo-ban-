@@ -34,47 +34,8 @@ st.markdown("""
 # File Uploader
 uploaded_file = st.file_uploader("上传 Excel 文件", type=['xlsx', 'xls'])
 
-# 新增：提前提取 neg_brand 以决定是否显示询问
-generate_sp_neg_brand = True  # 默认 True
-if uploaded_bytes is not None:  # 用 uploaded_bytes 检查
-    # 临时读取文件以检查 neg_brand
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-        tmp.write(uploaded_bytes)  # 用预保存的 bytes
-        input_file_temp = tmp.name
-    
-    try:
-        df_survey_temp = pd.read_excel(input_file_temp, sheet_name='广告模版', header=0, engine='openpyxl')
-        df_survey_temp = df_survey_temp.fillna('')
-        
-        # 提取 neg_brand
-        neg_brand_col_temp = None
-        for col_idx, col_name in enumerate(df_survey_temp.columns):
-            if '否品牌' in str(col_name).lower():
-                neg_brand_col_temp = col_idx
-        neg_brand_temp = []
-        if neg_brand_col_temp is not None:
-            neg_brand_temp = [str(int(x)).strip() for x in df_survey_temp.iloc[:, neg_brand_col_temp].dropna() if str(x).strip()]
-            neg_brand_temp = list(dict.fromkeys(neg_brand_temp))
-        
-        if neg_brand_temp:
-            st.info(f"检测到 '否品牌' 列有数据 ({len(neg_brand_temp)} 个唯一品牌): {neg_brand_temp[:3]}...")
-            generate_sp_neg_brand = st.checkbox("是否需要为商品推广生成否品牌列？", value=True, key="sp_neg_brand_checkbox")
-        else:
-            st.info("未检测到 '否品牌' 列数据，无需生成否定品牌行。")
-            generate_sp_neg_brand = False  # 无数据时不生成
-    
-    except Exception as e:
-        st.error(f"临时读取文件时出错：{e}")
-        generate_sp_neg_brand = False  # 出错时默认不生成
-    finally:
-        try:
-            if os.path.exists(input_file_temp):  # 安全检查文件存在
-                os.unlink(input_file_temp)
-        except Exception as unlink_e:
-            st.warning(f"临时文件删除失败（忽略）：{unlink_e}")
-
 # Function from the original script (copied and adapted)
-def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版', generate_sp_neg_brand=True):
+def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版'):
     # Create a temporary file from bytes
     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
         tmp.write(uploaded_bytes)
@@ -82,7 +43,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     try:
         # Read the entire file, header=0
-        df_survey = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, header=0)
+        df_survey = pd.read_excel(input_file, sheet_name=sheet_name, header=0)
         st.write(f"成功读取文件，数据形状：{df_survey.shape}")
         st.write(f"列名列表: {list(df_survey.columns)}")
     except FileNotFoundError:
@@ -268,13 +229,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             continue
 
         # 读取header行作为列名
-        header_data = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, skiprows=header_row, nrows=1)
+        header_data = pd.read_excel(input_file, sheet_name=sheet_name, skiprows=header_row, nrows=1)
         col_names = header_data.iloc[0].tolist()  # 获取列名
         
         # 读取数据行 (从header下一行到end_row)
         activity_df = pd.DataFrame()
         if end_row > header_row:
-            activity_df = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, skiprows=header_row + 1, nrows=end_row - header_row)
+            activity_df = pd.read_excel(input_file, sheet_name=sheet_name, skiprows=header_row + 1, nrows=end_row - header_row)
             activity_df.columns = col_names  # 设置列名
             st.write(f"活动数据形状 ({target_theme}): {activity_df.shape}")
             st.write(f"活动列名 ({target_theme}): {list(activity_df.columns)}")
@@ -556,16 +517,18 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row_neg_product = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
                                            '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product)
-                    
-                    # 新增：条件生成否品牌行
-                    if generate_sp_neg_brand and neg_brand:
+
+                    # 修改后：添加 if False: 包裹品牌循环
+                    if False:  # 禁用 SP 否品牌生成（未来可改为 True 恢复）
                         for negb in neg_brand:
                             row_neg_brand = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
                                              '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
                             sp_rows.append(row_neg_brand)
-                        st.write(f"  为 SP 生成否品牌否定商品定向行 (数量: {len(neg_brand)})")
-                    else:
-                        st.write(f"  跳过 SP 否品牌否定商品定向行 (用户选择: {generate_sp_neg_brand})")
+                    
+                    for negb in neg_brand:
+                        row_neg_brand = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
+                                         '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
+                        sp_rows.append(row_neg_brand)
                 
                 # 新增/修复：竞价调整层级（仅SP，为每个活动生成1行，如果条件满足）- 移到if is_asin外
                 row_bid_adjust = None  # 防护：初始化为空，避免UnboundLocalError
@@ -759,7 +722,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                                   '', '', '', '', cpc, '', '', f'asin="{asin}"', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_product_target)
                     
-                    # 否定商品定向: from global neg_asin and neg_brand (Brand 始终生成)
+                    # 否定商品定向: from global neg_asin and neg_brand
                     for neg in neg_asin:
                         row_neg_product = [product_brand, '否定商品定向', operation, campaign_name, campaign_name, '', '', campaign_name, '', status, 
                                            '', '', '', '', '', '', '', f'asin="{neg}"', '', '', '', '', '', '', '', '', '']
@@ -796,7 +759,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
 if uploaded_file is not None:
     if st.button("生成 Header 文件"):
         with st.spinner("正在处理文件..."):
-            output_buffer = generate_header_for_sbv_brand_store(uploaded_file.read(), generate_sp_neg_brand=generate_sp_neg_brand)
+            output_buffer = generate_header_for_sbv_brand_store(uploaded_file.read())
             if output_buffer is not None:
                 # Generate filename with current time (precise to minute)
                 now = datetime.now()
