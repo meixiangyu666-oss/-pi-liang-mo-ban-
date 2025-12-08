@@ -58,95 +58,111 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
+    # Fill NaN with empty string
+    df_survey = df_survey.fillna('')
 
-    
-    # 新加：动态区域检测函数
-    def find_region_start_end(df, target_theme):
-        """扫描A列找到主题行，返回 (header_row, end_row) (0-based索引)"""
-        theme_row = None
-        next_theme_row = None
-        for idx, val in enumerate(df.iloc[:, 0]):  # A列 (index 0)
-            if pd.notna(val) and target_theme in str(val).strip():
-                theme_row = idx
+    # 大 expander 包裹所有详细日志
+    with st.expander("查看详细日志", expanded=False):
+        # 新加：动态区域检测函数 (移入 expander 内，函数本身不打印，但其调用日志在内)
+        def find_region_start_end(df, target_theme):
+            """扫描A列找到主题行，返回 (header_row, end_row) (0-based索引)"""
+            theme_row = None
+            next_theme_row = None
+            for idx, val in enumerate(df.iloc[:, 0]):  # A列 (index 0)
+                if pd.notna(val) and target_theme in str(val).strip():
+                    theme_row = idx
+                    break
+            if theme_row is None:
+                st.warning(f"错误：未找到主题 '{target_theme}' 在A列")
+                return None, None
+            
+            # 找下一个主题（顺序：详情页 → 旗舰店 → 商品集 → SP）
+            next_themes = ["SBV落地页：品牌旗舰店", "SB落地页：商品集", "SBV落地页：商品详情页", "SP-商品推广"]
+            for idx in range(theme_row + 1, len(df)):
+                val = str(df.iloc[idx, 0]).strip()
+                if any(nt in val for nt in next_themes if nt != target_theme):
+                    next_theme_row = idx
+                    break
+            end_row = next_theme_row - 1 if next_theme_row else len(df) - 1
+            header_row = theme_row + 1
+            st.write(f"找到 '{target_theme}' 区域: 主题行 {theme_row+1}, header行 {header_row+1}, 数据到行 {end_row+1}")
+            return header_row, end_row
+
+        # 先找主题行，用于限全局设置范围（取第一个主题前）
+        temp_result = find_region_start_end(df_survey, 'SBV落地页：品牌旗舰店')
+        if temp_result[0] is None:
+            temp_result = find_region_start_end(df_survey, 'SB落地页：商品集')
+        if temp_result[0] is None:
+            temp_result = find_region_start_end(df_survey, 'SBV落地页：商品详情页')
+        if temp_result[0] is None:
+            temp_result = find_region_start_end(df_survey, 'SP-商品推广')
+        if temp_result[0] is None:
+            st.error("未找到任何支持的主题区域")
+            os.unlink(input_file)
+            return None
+        global_limit = temp_result[0]
+
+        # Extract global settings: from rows 0-20, column A (0) labels, B (1) values
+        global_settings = {}
+        for i in range(0, min(20, global_limit)):
+            if i >= len(df_survey):
                 break
-        if theme_row is None:
-            st.warning(f"错误：未找到主题 '{target_theme}' 在A列")
-            return None, None
+            label = str(df_survey.iloc[i, 0]).strip() if pd.notna(df_survey.iloc[i, 0]) else ''
+            value = str(df_survey.iloc[i, 1]).strip() if pd.notna(df_survey.iloc[i, 1]) and len(df_survey.columns) > 1 else ''
+            st.write(f"Row {i+1}: label='{label}', value='{value}'")  # Row 日志在内
+            
+            # Robust matching...
+            if '品牌实体编号' in label or 'ENTITY' in label.upper():
+                global_settings['entity_id'] = value
+            elif '品牌名称' in label:
+                global_settings['brand_name'] = value
+            elif '预算类型' in label:
+                global_settings['budget_type'] = value if value else '每日'
+            elif '创意素材标题' in label:
+                global_settings['creative_title'] = value
+            elif '落地页 URL' in label:
+                global_settings['landing_url'] = value
         
-        # 找下一个主题（顺序：详情页 → 旗舰店 → 商品集 → SP）
-        next_themes = ["SBV落地页：品牌旗舰店", "SB落地页：商品集", "SBV落地页：商品详情页", "SP-商品推广"]  # 从当前开始找下一个
-        for idx in range(theme_row + 1, len(df)):
-            val = str(df.iloc[idx, 0]).strip()
-            if any(nt in val for nt in next_themes if nt != target_theme):
-                next_theme_row = idx
-                break
-        end_row = next_theme_row - 1 if next_theme_row else len(df) - 1  # 到文件末尾
-        header_row = theme_row + 1  # header在主题行下一行
-        st.write(f"找到 '{target_theme}' 区域: 主题行 {theme_row+1}, header行 {header_row+1}, 数据到行 {end_row+1}")
-        return header_row, end_row
+        st.write(f"全局设置: {global_settings}")  # 移出 expander，核心可见
 
-    # 先找主题行，用于限全局设置范围（取第一个主题前）
-    temp_result = find_region_start_end(df_survey, 'SBV落地页：品牌旗舰店')
-    if temp_result[0] is None:
-        temp_result = find_region_start_end(df_survey, 'SB落地页：商品集')
-    if temp_result[0] is None:
-        temp_result = find_region_start_end(df_survey, 'SBV落地页：商品详情页')
-    if temp_result[0] is None:
-        temp_result = find_region_start_end(df_survey, 'SP-商品推广')
-    if temp_result[0] is None:
-        st.error("未找到任何支持的主题区域")
-        os.unlink(input_file)
-        return None
-    global_limit = temp_result[0]  # 用 [0] 是 header_row，即主题前
+        # Keyword columns...
+        header_row_full = df_survey.iloc[0].tolist()
+        keyword_columns = [col for col in header_row_full if isinstance(col, str) and ('精准词' in col or '广泛词' in col or '否' in col)]
+        st.write(f"关键词相关列: {keyword_columns}")  # 内
 
-    # Extract global settings: from rows 0-20, column A (0) labels, B (1) values
-    global_settings = {}
-    for i in range(0, min(20, global_limit)):
-        if i >= len(df_survey):
-            break
-        label = str(df_survey.iloc[i, 0]).strip() if pd.notna(df_survey.iloc[i, 0]) else ''
-        value = str(df_survey.iloc[i, 1]).strip() if pd.notna(df_survey.iloc[i, 1]) and len(df_survey.columns) > 1 else ''
-        st.write(f"Row {i+1}: label='{label}', value='{value}'")
-        
-        # Robust matching similar to test SB.py
-        if '品牌实体编号' in label or 'ENTITY' in label.upper():
-            global_settings['entity_id'] = value
-        elif '品牌名称' in label:
-            global_settings['brand_name'] = value
-        elif '预算类型' in label:
-            global_settings['budget_type'] = value if value else '每日'
-        elif '创意素材标题' in label:
-            global_settings['creative_title'] = value
-        elif '落地页 URL' in label:
-            global_settings['landing_url'] = value
+        # Identify keyword categories...
+        keyword_categories = set()
+        for col in keyword_columns:
+            col_lower = str(col).lower()
+            if '/' in col_lower:
+                parts = col_lower.split('/')
+                if len(parts) > 0 and parts[0]:
+                    keyword_categories.add(parts[0].strip())
+                if len(parts) > 1 and parts[1]:
+                    chinese_part = parts[1].split('-')[0].strip() if '-' in parts[1] else parts[1].strip()
+                    keyword_categories.add(chinese_part)
+            else:
+                for suffix in ['精准词', '广泛词', '精准', '广泛']:
+                    if col_lower.endswith(suffix):
+                        prefix = col_lower[:-len(suffix)].strip()
+                        if prefix:
+                            keyword_categories.add(prefix)
+                            break
+        keyword_categories.update(['suzhu', '宿主', 'host', 'case', '包', '对手', 'tape'])
+        st.write(f"识别到的关键词类别: {keyword_categories}")  # 内
+
+    # Negative keywords extraction... (所有后续 st.write 如否定数量、匹配列、活动处理、ASIN 示例等都保持在内 expander)
+
+    # ... (其余代码不变，直到)
     
-    st.write(f"全局设置: {global_settings}")
+    st.success(f"生成完成！品牌行数：{len(brand_rows)}, SP行数：{len(sp_rows)}")  # 外，核心可见
+
+    # Cleanup temp file
+    os.unlink(input_file)
     
-    # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
-    header_row_full = df_survey.iloc[0].tolist()
-    keyword_columns = [col for col in header_row_full if isinstance(col, str) and ('精准词' in col or '广泛词' in col or '否' in col)]
-    st.write(f"关键词相关列: {keyword_columns}")
+    return output_buffer
     
-    # Identify keyword categories like in test SB.py
-    keyword_categories = set()
-    for col in keyword_columns:
-        col_lower = str(col).lower()
-        if '/' in col_lower:
-            parts = col_lower.split('/')
-            if len(parts) > 0 and parts[0]:
-                keyword_categories.add(parts[0].strip())
-            if len(parts) > 1 and parts[1]:
-                chinese_part = parts[1].split('-')[0].strip() if '-' in parts[1] else parts[1].strip()
-                keyword_categories.add(chinese_part)
-        else:
-            for suffix in ['精准词', '广泛词', '精准', '广泛']:
-                if col_lower.endswith(suffix):
-                    prefix = col_lower[:-len(suffix)].strip()
-                    if prefix:
-                        keyword_categories.add(prefix)
-                        break
-    keyword_categories.update(['suzhu', '宿主', 'host', 'case', '包', '对手', 'tape'])
-    st.write(f"识别到的关键词类别: {keyword_categories}")
+  
     
     # Negative keywords extraction: map to specific columns like test SB.py
     # Col indices mapping
