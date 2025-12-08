@@ -505,30 +505,25 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 asin_targets = list(dict.fromkeys(asin_targets))
                                 st.write(f"  商品定向 ASIN 数量: {len(asin_targets)} (示例: {asin_targets[:2] if asin_targets else '无'})")
                                 break
-                    
+                        
                     if asin_targets:
                         for asin in asin_targets:
                             row_product_target = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                                  '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
+                                                '', '', '', cpc, '', '', '', '', '', f'asin="{asin}"']
                             sp_rows.append(row_product_target)
-                    
+                        
                     # 否定商品定向: from global neg_asin and neg_brand
                     for neg in neg_asin:
                         row_neg_product = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                           '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
+                                        '', '', '', '', '', '', '', '', '', f'asin="{neg}"']
                         sp_rows.append(row_neg_product)
-
-                    # 修改后：添加 if False: 包裹品牌循环
-                    if False:  # 禁用 SP 否品牌生成（未来可改为 True 恢复）
+                    
+                    # 条件禁用: 否品牌循环
+                    if False:  # 禁用 SP 否品牌生成 (改为 True 恢复)
                         for negb in neg_brand:
                             row_neg_brand = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                             '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
+                                            '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
                             sp_rows.append(row_neg_brand)
-                    
-                    for negb in neg_brand:
-                        row_neg_brand = [product_sp, '否定商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                         '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
-                        sp_rows.append(row_neg_brand)
                 
                 # 新增/修复：竞价调整层级（仅SP，为每个活动生成1行，如果条件满足）- 移到if is_asin外
                 row_bid_adjust = None  # 防护：初始化为空，避免UnboundLocalError
