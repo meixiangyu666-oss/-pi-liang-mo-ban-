@@ -43,7 +43,7 @@ if uploaded_file is not None:
         input_file_temp = tmp.name
     
     try:
-        df_survey_temp = pd.read_excel(input_file_temp, sheet_name='广告模版', header=0)
+        df_survey_temp = pd.read_excel, engine='openpyxl'(input_file_temp, sheet_name='广告模版', header=0)
         df_survey_temp = df_survey_temp.fillna('')
         
         # 提取 neg_brand
@@ -78,7 +78,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     try:
         # Read the entire file, header=0
-        df_survey = pd.read_excel(input_file, sheet_name=sheet_name, header=0)
+        df_survey = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, header=0)
         st.write(f"成功读取文件，数据形状：{df_survey.shape}")
         st.write(f"列名列表: {list(df_survey.columns)}")
     except FileNotFoundError:
@@ -264,13 +264,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             continue
 
         # 读取header行作为列名
-        header_data = pd.read_excel(input_file, sheet_name=sheet_name, skiprows=header_row, nrows=1)
+        header_data = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, skiprows=header_row, nrows=1)
         col_names = header_data.iloc[0].tolist()  # 获取列名
         
         # 读取数据行 (从header下一行到end_row)
         activity_df = pd.DataFrame()
         if end_row > header_row:
-            activity_df = pd.read_excel(input_file, sheet_name=sheet_name, skiprows=header_row + 1, nrows=end_row - header_row)
+            activity_df = pd.read_excel, engine='openpyxl'(input_file, sheet_name=sheet_name, skiprows=header_row + 1, nrows=end_row - header_row)
             activity_df.columns = col_names  # 设置列名
             st.write(f"活动数据形状 ({target_theme}): {activity_df.shape}")
             st.write(f"活动列名 ({target_theme}): {list(activity_df.columns)}")
