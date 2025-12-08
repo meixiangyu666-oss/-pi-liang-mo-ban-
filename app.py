@@ -45,7 +45,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         # Read the entire file, header=0
         df_survey = pd.read_excel(input_file, sheet_name=sheet_name, header=0)
         st.write(f"成功读取文件，数据形状：{df_survey.shape}")
-        
+        with st.expander("查看详细日志", expanded=False):  # 默认折叠
+            st.write(f"列名列表: {list(df_survey.columns)}")
     except FileNotFoundError:
         st.error(f"错误：未找到文件。请确保文件包含 '{sheet_name}' sheet。")
         os.unlink(input_file)
@@ -57,6 +58,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
+
+    with st.expander("查看详细日志", expanded=False):  # 另一个 for 区域/活动
     
     # 新加：动态区域检测函数
     def find_region_start_end(df, target_theme):
@@ -123,6 +126,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
     header_row_full = df_survey.iloc[0].tolist()
     keyword_columns = [col for col in header_row_full if isinstance(col, str) and ('精准词' in col or '广泛词' in col or '否' in col)]
+    st.write(f"关键词相关列: {keyword_columns}")
     
     # Identify keyword categories like in test SB.py
     keyword_categories = set()
@@ -143,6 +147,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         keyword_categories.add(prefix)
                         break
     keyword_categories.update(['suzhu', '宿主', 'host', 'case', '包', '对手', 'tape'])
+    st.write(f"识别到的关键词类别: {keyword_categories}")
     
     # Negative keywords extraction: map to specific columns like test SB.py
     # Col indices mapping
@@ -278,8 +283,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                 cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
                 sku = str(row.iloc[sku_col]).strip() if sku_col is not None else ''
-                budget_str = str(row.iloc[budget_col]).strip() if budget_col is not None else ''
-                st.write(f"  SP: {campaign_name} (CPC={cpc}, 预算={budget_str})")
+                budget = str(row.iloc[budget_col]).strip() if budget_col is not None else ''
                 group_bid = str(row.iloc[group_bid_col]).strip() if group_bid_col is not None else ''
                 ad_position = str(row.iloc[ad_position_col]).strip() if ad_position_col is not None else ''
                 percentage = str(int(float(row.iloc[percentage_col]))) if percentage_col is not None and pd.notna(row.iloc[percentage_col]) and row.iloc[percentage_col] != '' else ''
@@ -295,7 +299,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         'percentage': percentage
                     }
                     activity_rows.append(activity)
-                    st.write(f"  SP 活动: {campaign_name}, 预算={budget}")
+                    st.write(f"  SP 活动: {campaign_name}, CPC={cpc}, 预算={budget}, 广告位={ad_position}, 百分比={percentage}")
         
         else:
             # Brand 逻辑：动态查找列名索引
@@ -325,9 +329,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         'asins': asins_str
                     }
                     activity_rows.append(activity)
-                    st.write(f"  Brand 活动: {campaign_name}")
+                    st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
 
-        st.write(f"  SP: {campaign_name} (CPC={cpc}, 预算={budget})")
+        st.write(f"Found {len(activity_rows)} activity rows ({target_theme}): {[r['campaign_name'] for r in activity_rows]}")
         
         # 根据主题设置视频广告实体层级和处理 ASIN
         if 'SP-商品推广' in target_theme:
@@ -343,7 +347,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         # Generate rows for this region
         for activity in activity_rows:
             campaign_name = activity['campaign_name']
-            st.write(f"处理: {campaign_name}")
+            st.write(f"处理活动 ({target_theme}): {campaign_name}")
             
             is_asin = False  # 初始化变量，避免 UnboundLocalError
             
@@ -420,8 +424,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
                         keywords = list(dict.fromkeys(col_data))
                         col_name = str(df_survey.columns[keyword_col_idx]) if col_name is None else col_name
-                        st.write(f"  {matched_category} {match_type} 匹配列: idx={keyword_col_idx}")
-                        st.write(f"  关键词数量: {len(keywords)}")
+                        st.write(f"  匹配的列: {col_name} (idx={keyword_col_idx})")
+                        st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
                     else:
                         keywords = []
                         st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
@@ -480,12 +484,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                     os.unlink(input_file)
                                     return None  # Pause generation
                         
+                        st.write("\n=== 重复检测完成（无重复）===")
                         
                         # Generate rows: deduped kws
                         for m_type, kw_sources in neg_data_sources.items():
                             kws = list(kw_sources.keys())
                             if kws:
-                                st.write(f"  {m_type} 否定数量: {len(kws)}")
+                                st.write(f"  {m_type} 否定关键词数量: {len(kws)}")
                             for kw in kws:
                                 row_neg = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
                                            '', '', '', '', kw, m_type, '', '', '', '']
@@ -528,7 +533,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 ad_position = activity.get('ad_position', '').strip()
                 percentage = activity.get('percentage', '').strip()
                 if ad_position and percentage:  # 只有两者都有值才生成
-                    st.write(f"  竞价调整: {campaign_name}")
+                    st.write(f"  生成竞价调整行 (活动: {campaign_name}, 广告位: {ad_position}, 百分比: {percentage})")
                     row_bid_adjust = [
                         product_sp, '竞价调整', operation,
                         campaign_name, '', '', '', '', '',
@@ -624,8 +629,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
                         keywords = list(dict.fromkeys(col_data))
                         col_name = str(df_survey.columns[keyword_col_idx]) if col_name is None else col_name
-                        st.write(f"  {matched_category} {match_type} 匹配列: idx={keyword_col_idx}")
-                        st.write(f"  关键词数量: {len(keywords)}")
+                        st.write(f"  匹配的列: {col_name} (idx={keyword_col_idx})")
+                        st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
                     else:
                         keywords = []
                         st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
@@ -684,12 +689,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                     os.unlink(input_file)
                                     return None  # Pause generation
                         
+                        st.write("\n=== 重复检测完成（无重复）===")
                         
                         # Generate rows: deduped kws
                         for m_type, kw_sources in neg_data_sources.items():
                             kws = list(kw_sources.keys())
                             if kws:
-                                st.write(f"  {m_type} 否定数量: {len(kws)}")
+                                st.write(f"  {m_type} 否定关键词数量: {len(kws)}")
                             for kw in kws:
                                 row_neg = [product_brand, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
                                            '', '', '', '', '', kw, m_type, '', '', '', '', '', '', '', '', '', '']
