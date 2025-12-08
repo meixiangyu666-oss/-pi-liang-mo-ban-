@@ -59,7 +59,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
 
-    with st.expander("查看详细日志", expanded=False):  # 另一个 for 区域/活动
     
     # 新加：动态区域检测函数
     def find_region_start_end(df, target_theme):
