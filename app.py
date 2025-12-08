@@ -45,7 +45,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         # Read the entire file, header=0
         df_survey = pd.read_excel(input_file, sheet_name=sheet_name, header=0)
         st.write(f"成功读取文件，数据形状：{df_survey.shape}")
-        st.write(f"列名列表: {list(df_survey.columns)}")
     except FileNotFoundError:
         st.error(f"错误：未找到文件。请确保文件包含 '{sheet_name}' sheet。")
         os.unlink(input_file)
@@ -81,7 +80,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         end_row = next_theme_row - 1 if next_theme_row else len(df) - 1  # 到文件末尾
         header_row = theme_row + 1  # header在主题行下一行
         st.write(f"找到 '{target_theme}' 区域: 主题行 {theme_row+1}, header行 {header_row+1}, 数据到行 {end_row+1}")
-        return header_row, end_row
 
     # 先找主题行，用于限全局设置范围（取第一个主题前）
     temp_result = find_region_start_end(df_survey, 'SBV落地页：品牌旗舰店')
@@ -104,7 +102,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             break
         label = str(df_survey.iloc[i, 0]).strip() if pd.notna(df_survey.iloc[i, 0]) else ''
         value = str(df_survey.iloc[i, 1]).strip() if pd.notna(df_survey.iloc[i, 1]) and len(df_survey.columns) > 1 else ''
-        st.write(f"Row {i+1}: label='{label}', value='{value}'")
         
         # Robust matching similar to test SB.py
         if '品牌实体编号' in label or 'ENTITY' in label.upper():
@@ -118,12 +115,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         elif '落地页 URL' in label:
             global_settings['landing_url'] = value
     
-    st.write(f"全局设置: {global_settings}")
     
     # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
     header_row_full = df_survey.iloc[0].tolist()
     keyword_columns = [col for col in header_row_full if isinstance(col, str) and ('精准词' in col or '广泛词' in col or '否' in col)]
-    st.write(f"关键词相关列: {keyword_columns}")
     
     # Identify keyword categories like in test SB.py
     keyword_categories = set()
@@ -144,7 +139,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         keyword_categories.add(prefix)
                         break
     keyword_categories.update(['suzhu', '宿主', 'host', 'case', '包', '对手', 'tape'])
-    st.write(f"识别到的关键词类别: {keyword_categories}")
     
     # Negative keywords extraction: map to specific columns like test SB.py
     # Col indices mapping
@@ -187,8 +181,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     if neg_brand_col is not None:
         neg_brand = [str(int(x)).strip() for x in df_survey.iloc[:, neg_brand_col].dropna() if str(x).strip()]
         neg_brand = list(dict.fromkeys(neg_brand))
-    st.write(f"否定ASIN: {neg_asin}")
-    st.write(f"否品牌: {neg_brand}")
     
     # Output columns for Brand (SB/SBV) - original 27 columns
     output_columns_brand = [
@@ -237,8 +229,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         if end_row > header_row:
             activity_df = pd.read_excel(input_file, sheet_name=sheet_name, skiprows=header_row + 1, nrows=end_row - header_row)
             activity_df.columns = col_names  # 设置列名
-            st.write(f"活动数据形状 ({target_theme}): {activity_df.shape}")
-            st.write(f"活动列名 ({target_theme}): {list(activity_df.columns)}")
+
         else:
             st.warning(f"无活动数据行 ({target_theme})")
             continue
@@ -296,7 +287,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         'percentage': percentage
                     }
                     activity_rows.append(activity)
-                    st.write(f"  SP 活动: {campaign_name}, CPC={cpc}, 预算={budget}, 广告位={ad_position}, 百分比={percentage}")
         
         else:
             # Brand 逻辑：动态查找列名索引
@@ -326,9 +316,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         'asins': asins_str
                     }
                     activity_rows.append(activity)
-                    st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
 
-        st.write(f"Found {len(activity_rows)} activity rows ({target_theme}): {[r['campaign_name'] for r in activity_rows]}")
         
         # 根据主题设置视频广告实体层级和处理 ASIN
         if 'SP-商品推广' in target_theme:
@@ -344,7 +332,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         # Generate rows for this region
         for activity in activity_rows:
             campaign_name = activity['campaign_name']
-            st.write(f"处理活动 ({target_theme}): {campaign_name}")
             
             is_asin = False  # 初始化变量，避免 UnboundLocalError
             
@@ -421,8 +408,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         col_data = [str(kw).strip() for kw in df_survey.iloc[:, keyword_col_idx].dropna() if str(kw).strip()]
                         keywords = list(dict.fromkeys(col_data))
                         col_name = str(df_survey.columns[keyword_col_idx]) if col_name is None else col_name
-                        st.write(f"  匹配的列: {col_name} (idx={keyword_col_idx})")
-                        st.write(f"  关键词数量: {len(keywords)} (示例: {keywords[:2] if keywords else '无'})")
+                        
                     else:
                         keywords = []
                         st.warning(f"  无匹配列 for {matched_category} {match_type} in {target_theme}")
