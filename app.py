@@ -316,8 +316,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             campaign_col = col_idx
                         elif 'cpc' in col_str:
                             cpc_col = col_idx
-                        elif 'asin' in col_str:
-                            asins_col = col_idx
                         elif '视频媒体' in col_str and '编号' in col_str:  # 新增：匹配“视频媒体编号”列
                             video_media_col = col_idx
                         elif '自定义图片' in col_str:  # 新增：匹配“自定义图片”列
