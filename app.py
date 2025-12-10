@@ -324,7 +324,12 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     # 提取值
                     campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                     cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
-                    asins_str = str(row.iloc[asins_col]).strip() if asins_col is not None else ''
+                    asins_list = []
+                    for col in asins_cols:  # 用列表asins_cols
+                        cell_val = str(row.iloc[col]).strip()
+                        if cell_val:
+                            asins_list.extend([asin.strip() for asin in cell_val.split(',')])  # split逗号扩展
+                    asins_str = ', '.join(sorted(set(asins_list))) if asins_list else ''  # 去重、join
                     video_asset = str(row.iloc[video_media_col]).strip() if video_media_col is not None else ''  # 新增：提取视频素材值
                     custom_image = str(row.iloc[custom_image_col]).strip() if custom_image_col is not None else ''  # 新增：提取自定义图片值（覆盖原硬编码custom_image = ''）
                     print(f"  自定义图片: '{custom_image}' (col={custom_image_col})")
