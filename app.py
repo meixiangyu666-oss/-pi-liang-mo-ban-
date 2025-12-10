@@ -309,6 +309,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     cpc_col = None
                     asins_col = None
                     video_media_col = None  # 新增：初始化视频媒体列索引
+                    custom_image_col = None  # 新增：初始化自定义图片列索引
                     for col_idx, col_name in enumerate(activity_df.columns):
                         col_str = str(col_name).strip().lower()
                         if '广告活动名称' in col_str:
@@ -319,12 +320,15 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             asins_col = col_idx
                         elif '视频媒体' in col_str and '编号' in col_str:  # 新增：匹配“视频媒体编号”列
                             video_media_col = col_idx
+                        elif '自定义图片' in col_str:  # 新增：匹配“自定义图片”列
+                            custom_image_col = col_idx
                     
                     # 提取值
                     campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                     cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
                     asins_str = str(row.iloc[asins_col]).strip() if asins_col is not None else ''
                     video_asset = str(row.iloc[video_media_col]).strip() if video_media_col is not None else ''  # 新增：提取视频素材值
+                    custom_image = str(row.iloc[custom_image_col]).strip() if custom_image_col is not None else ''  # 新增：提取自定义图片值（覆盖原硬编码custom_image = ''）
                     
                     if campaign_name:
                         activity = {
@@ -556,12 +560,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     cpc = float(activity['cpc']) if activity['cpc'] != '' else default_bid
                     asins_str = activity.get('asins', '')
                     landing_url = global_settings.get('landing_url', '')
-                    landing_type = '品牌旗舰店' if '旗舰店' in target_theme else '商品集' if '商品集' in target_theme else '商品详情页'
+                    landing_type = '品牌旗舰店' if '旗舰店' in target_theme or '商品集' in target_theme else '商品详情页'  # 改：'商品集'分支统一为'品牌旗舰店'
                     brand_name = global_settings.get('brand_name', '')
                     logo_asset = 'amzn1.assetlibrary.asset1.c1d914481a642f0f779e4b1a09f90ba2:version_v1'  # Default
                     creative_title = global_settings.get('creative_title', '')
-                    video_asset = ''
-                    custom_image = ''
                     
                     campaign_name_normalized = str(campaign_name).lower()
                     
