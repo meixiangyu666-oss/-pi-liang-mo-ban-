@@ -308,6 +308,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     campaign_col = None
                     cpc_col = None
                     asins_col = None
+                    video_media_col = None  # 新增：初始化视频媒体列索引
                     for col_idx, col_name in enumerate(activity_df.columns):
                         col_str = str(col_name).strip().lower()
                         if '广告活动名称' in col_str:
@@ -316,11 +317,14 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             cpc_col = col_idx
                         elif 'asin' in col_str:
                             asins_col = col_idx
+                        elif '视频媒体' in col_str and '编号' in col_str:  # 新增：匹配“视频媒体编号”列
+                            video_media_col = col_idx
                     
                     # 提取值
                     campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                     cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
                     asins_str = str(row.iloc[asins_col]).strip() if asins_col is not None else ''
+                    video_asset = str(row.iloc[video_media_col]).strip() if video_media_col is not None else ''  # 新增：提取视频素材值
                     
                     if campaign_name:
                         activity = {
