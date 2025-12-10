@@ -307,7 +307,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     # 动态获取列索引 for Brand
                     campaign_col = None
                     cpc_col = None
-                    asins_col = None
+                    asins_cols = [3, 4, 5]
                     video_media_col = None  # 新增：初始化视频媒体列索引
                     custom_image_col = None  # 新增：初始化自定义图片列索引
                     for col_idx, col_name in enumerate(activity_df.columns):
