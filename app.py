@@ -335,7 +335,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         activity = {
                             'campaign_name': campaign_name,
                             'cpc': cpc,
-                            'asins': asins_str
+                            'asins': asins_str,
+                            'video_asset': video_asset,  # 新增：保存视频
+                            'custom_image': custom_image  # 新增：保存自定义图片
                         }
                         activity_rows.append(activity)
                         st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
@@ -560,6 +562,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     # Original Brand (SB/SBV) generation logic - with regional keyword rules
                     cpc = float(activity['cpc']) if activity['cpc'] != '' else default_bid
                     asins_str = activity.get('asins', '')
+                    video_asset = activity.get('video_asset', '')  # 新增：从 activity 获取
+                    custom_image = activity.get('custom_image', '')  # 新增：从 activity 获取
                     landing_url = global_settings.get('landing_url', '')
                     landing_type = '品牌旗舰店' if '旗舰店' in target_theme or '商品集' in target_theme else '商品详情页'  # 改：'商品集'分支统一为'品牌旗舰店'
                     brand_name = global_settings.get('brand_name', '')
