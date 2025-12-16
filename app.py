@@ -603,7 +603,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     brand_name_for_row = '' if video_entity_level == '视频广告' else brand_name
 
                     row3 = [product_brand, video_entity_level, operation, campaign_name, campaign_name, campaign_name, '', '', campaign_name, status, 
-                            '', '', '', '', '', '', '', '', landing_url_for_row, landing_type, brand_name_for_row, 'False', logo_asset, creative_title, asins_str, video_asset, custom_image]
+                            '', '', '', '', '', '', '', '', landing_url_for_row, landing_type, brand_name_for_row, 'False', '', '', asins_str, video_asset, custom_image]
                     brand_rows.append(row3)
                     
                     # Keywords: dynamic column selection based on regional rules (SB/SBV)
