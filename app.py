@@ -334,7 +334,30 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     video_asset = str(row.iloc[video_media_col]).strip() if video_media_col is not None else ''  # 新增：提取视频素材值
                     custom_image = str(row.iloc[custom_image_col]).strip() if custom_image_col is not None else ''  # 新增：提取自定义图片值（覆盖原硬编码custom_image = ''）
                     print(f"  自定义图片: '{custom_image}' (col={custom_image_col})")
-                    
+                    # 新增：为当前行提取品牌徽标素材编号
+                    logo_asset = ''
+                    logo_col_idx = None
+
+                    # 优先：按列名查找（最稳健）
+                    for col_idx, col_name in enumerate(activity_df.columns):
+                        if '品牌徽标素材编号' in str(col_name):
+                            logo_col_idx = col_idx
+                            break
+
+                    # Fallback 到固定 J 列 (index 9)
+                    if logo_col_idx is None:
+                        if len(activity_df.columns) > 9:
+                            logo_col_idx = 9
+                            st.write(f"  未找到‘品牌徽标素材编号’列名，使用固定J列（第10列） (活动: {campaign_name})")
+                        else:
+                            st.warning(f"  数据列不足10列，无法读取品牌徽标素材编号 (活动: {campaign_name})")
+
+                    # 从当前行读取
+                    if logo_col_idx is not None:
+                        cell_value = row.iloc[logo_col_idx] if logo_col_idx < len(row) else ''
+                        if pd.notna(cell_value):
+                            logo_asset = str(cell_value).strip()
+
                     if campaign_name:
                         activity = {
                             'campaign_name': campaign_name,
