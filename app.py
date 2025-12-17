@@ -55,10 +55,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         os.unlink(input_file)
         return None
     
-    error_container = st.container()
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
-    errors_found = []  # 初始化错误列表
 
     # 大 expander 包裹所有详细日志
     with st.expander("查看详细日志", expanded=False):
@@ -291,19 +289,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     percentage = str(int(float(row.iloc[percentage_col]))) if percentage_col is not None and pd.notna(row.iloc[percentage_col]) and row.iloc[percentage_col] != '' else ''
                     
                     if campaign_name:
-                        # === 新增校验逻辑开始 ===
-                        missing_fields = []
-                        if not sku:
-                            missing_fields.append("SKU")
-                        if not budget:
-                            missing_fields.append("预算")
-                        
-                        if missing_fields:
-                            msg = f"❌ [SP-商品推广] 行 {idx+header_row+2}: 活动 '{campaign_name}' 缺少: {', '.join(missing_fields)}"
-                            st.error(msg)
-                            errors_found.append(msg)
-                        # === 新增校验逻辑结束 ===
-
                         activity = {
                             'campaign_name': campaign_name,
                             'cpc': cpc,
@@ -374,32 +359,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             logo_asset = str(cell_value).strip()
 
                     if campaign_name:
-                        # === 新增校验逻辑开始 ===
-                        missing_fields = []
-                        
-                        # 1. 检查 ASIN (所有品牌广告都需要)
-                        if not asins_str:
-                            missing_fields.append("ASIN (子产品)")
-
-                        # 2. 检查 品牌徽标 (通常都需要)
-                        if not logo_asset:
-                            missing_fields.append("品牌徽标素材编号")
-
-                        # 3. 检查 视频素材 (仅当主题包含 'SBV' 或 '视频' 时检查)
-                        if ('SBV' in target_theme or '视频' in str(row.values)) and not video_asset:
-                            missing_fields.append("视频媒体编号")
-
-                        # 4. 检查 自定义图片 (如果你的业务逻辑是必须有图片，就加上这个检查)
-                        # if not custom_image:
-                        #    missing_fields.append("自定义图片") 
-
-                        if missing_fields:
-                            # idx是相对索引，加上header_row+2才是Excel里的实际行号
-                            msg = f"❌ [{target_theme}] 行 {idx+header_row+2}: 活动 '{campaign_name}' 缺少: {', '.join(missing_fields)}"
-                            error_container.error(err_msg)
-                            errors_found.append(msg)
-                        # === 新增校验逻辑结束 ===
-
                         activity = {
                             'campaign_name': campaign_name,
                             'cpc': cpc,
@@ -825,16 +784,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             row_neg_brand = [product_brand, '否定商品定向', operation, campaign_name, campaign_name, '', '', campaign_name, '', status, 
                                             '', '', '', '', '', '', '', f'brand="{negb}"', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_neg_brand)
-        
-        # === 新增拦截逻辑 ===
-        if errors_found:
-            error_container.error("⛔️ 检测到关键信息缺失！为了防止广告投放事故，已终止生成文件。")
-            error_container.error(f"总计发现 {len(errors_found)} 处错误，请参照上方红色报错信息修改 Excel 后重新上传。")
-            st.warning("生成已终止，详细错误见上方。")
-            # 删除临时文件并退出
-            os.unlink(input_file) 
-            return None
-        # ==================
         
         # Create DFs
         df_brand = pd.DataFrame(brand_rows, columns=output_columns_brand) if brand_rows else pd.DataFrame(columns=output_columns_brand)
