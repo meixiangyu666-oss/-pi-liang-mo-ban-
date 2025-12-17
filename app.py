@@ -348,16 +348,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
 
             st.write(f"Found {len(activity_rows)} activity rows ({target_theme}): {[r['campaign_name'] for r in activity_rows]}")
             
-            # 根据主题设置视频广告实体层级和处理 ASIN
-            if 'SP-商品推广' in target_theme:
-                # SP: No video entity, handle separately
-                video_entity_level = None
-            elif 'SBV落地页：品牌旗舰店' in target_theme:
-                video_entity_level = '品牌视频广告'
-            elif 'SB落地页：商品集' in target_theme:
-                video_entity_level = '商品集广告'
-            else:
-                video_entity_level = '视频广告'  # 新主题默认
             
             # Generate rows for this region
             for activity in activity_rows:
@@ -598,13 +588,36 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
                     brand_rows.append(row2)
                     
-                    # Row3: Video/商品集广告
-                    landing_url_for_row = '' if video_entity_level == '视频广告' else landing_url
-                    brand_name_for_row = '' if video_entity_level == '视频广告' else brand_name
+                    # Row3: 广告实体层级（品牌视频广告 / 商品集广告 / 视频广告） - 按主题分开处理，避免共用逻辑
+                    if 'SBV落地页：品牌旗舰店' in target_theme:
+                        # 品牌旗舰店视频广告
+                        row3 = [product_brand, '品牌视频广告', operation,
+                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
+                                '', '', '', '', '', '', '', '',
+                                landing_url, '品牌旗舰店', brand_name, 'False', '', '',
+                                asins_str, video_asset, custom_image]
+                        brand_rows.append(row3)
 
-                    row3 = [product_brand, video_entity_level, operation, campaign_name, campaign_name, campaign_name, '', '', campaign_name, status, 
-                            '', '', '', '', '', '', '', '', landing_url_for_row, landing_type, brand_name_for_row, 'False', '', '', asins_str, video_asset, custom_image]
-                    brand_rows.append(row3)
+                    elif 'SB落地页：商品集' in target_theme:
+                        # 商品集广告（非视频，但需要落地页）
+                        row3 = [product_brand, '商品集广告', operation,
+                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
+                                '', '', '', '', '', '', '', '',
+                                landing_url, '品牌旗舰店', brand_name, 'False', '', '',
+                                asins_str, video_asset, custom_image]
+                        brand_rows.append(row3)
+
+                    elif 'SBV落地页：商品详情页' in target_theme:
+                        # 视频直接投放到商品详情页（Video to PDP） - 完全独立逻辑，不填落地页和品牌名
+                        row3 = [product_brand, '视频广告', operation,
+                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
+                                '', '', '', '', '', '', '', '',
+                                '', '商品详情页', '', 'False', '', '',
+                                asins_str, video_asset, custom_image]
+                        brand_rows.append(row3)
+                    
+                    else:
+                        st.warning(f"未识别的 Brand 主题：{target_theme}，跳过生成广告实体行")
                     
                     # Keywords: dynamic column selection based on regional rules (SB/SBV)
                     if not is_asin:
