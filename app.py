@@ -57,6 +57,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
+    error_container = st.container()
     errors_found = []  # <--- 新增：用于记录所有的缺失项错误
 
     # 大 expander 包裹所有详细日志
@@ -395,7 +396,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         if missing_fields:
                             # idx是相对索引，加上header_row+2才是Excel里的实际行号
                             msg = f"❌ [{target_theme}] 行 {idx+header_row+2}: 活动 '{campaign_name}' 缺少: {', '.join(missing_fields)}"
-                            st.error(msg)
+                            error_container.error(err_msg)
                             errors_found.append(msg)
                         # === 新增校验逻辑结束 ===
 
@@ -827,8 +828,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         
         # === 新增拦截逻辑 ===
         if errors_found:
-            st.error("⛔️ 检测到关键信息缺失！为了防止广告投放事故，已终止生成文件。")
-            st.error(f"总计发现 {len(errors_found)} 处错误，请参照上方红色报错信息修改 Excel 后重新上传。")
+            error_container.error("⛔️ 检测到关键信息缺失！为了防止广告投放事故，已终止生成文件。")
+            error_container.error(f"总计发现 {len(errors_found)} 处错误，请参照上方红色报错信息修改 Excel 后重新上传。")
+            st.warning("生成已终止，详细错误见上方。")
             # 删除临时文件并退出
             os.unlink(input_file) 
             return None
