@@ -594,7 +594,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row3 = [product_brand, '品牌视频广告', operation,
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
-                                landing_url, '品牌旗舰店', brand_name, 'False', '', '',
+                                landing_url, '品牌旗舰店', brand_name, 'False', logo_asset, creative_title,
                                 asins_str, video_asset, custom_image]
                         brand_rows.append(row3)
 
@@ -603,7 +603,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row3 = [product_brand, '商品集广告', operation,
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
-                                landing_url, '品牌旗舰店', brand_name, 'False', '', '',
+                                landing_url, '品牌旗舰店', brand_name, 'False', logo_asset, creative_title,
                                 asins_str, video_asset, custom_image]
                         brand_rows.append(row3)
 
@@ -613,7 +613,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
                                 '', '商品详情页', '', 'False', '', '',
-                                asins_str, video_asset, custom_image]
+                                asins_str, video_asset, '']
                         brand_rows.append(row3)
                     
                     else:
