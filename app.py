@@ -364,7 +364,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             'cpc': cpc,
                             'asins': asins_str,
                             'video_asset': video_asset,  # 新增：保存视频
-                            'custom_image': custom_image  # 新增：保存自定义图片
+                            'custom_image': custom_image,  # 新增：保存自定义图片
+                            'logo_asset': logo_asset
                         }
                         activity_rows.append(activity)
                         st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
@@ -585,28 +586,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     landing_type = '品牌旗舰店' if '旗舰店' in target_theme or '商品集' in target_theme else '商品详情页'  # 改：'商品集'分支统一为'品牌旗舰店'
                     brand_name = global_settings.get('brand_name', '')
                     creative_title = global_settings.get('creative_title', '')
-                    # 新增：从当前区域的 J 列（第10列，索引9）提取品牌徽标素材编号
-                    logo_asset = ''
-                    current_row_index = activity_df.index.get_loc(idx) + (header_row + 2)  # 可选：日志用，显示Excel行号
-                    logo_col_idx = None
                     
-                    # 优先：按列名查找“品牌徽标素材编号”（更稳健，不怕列移动）
-                    for col_idx, col_name in enumerate(activity_df.columns):
-                        if '品牌徽标素材编号' in str(col_name):
-                            logo_col_idx = col_idx
-                            break
-                    
-                    # 如果没找到列名，fallback 到固定 J 列 (index 9)
-                    if logo_col_idx is None:
-                        if len(activity_df.columns) > 9:
-                            logo_col_idx = 9
-                            st.write(f"  未找到列名，使用固定J列 (第10列) 提取品牌徽标素材编号 (活动: {campaign_name})")
-                        else:
-                            st.warning(f"  列不足10，无法读取品牌徽标素材编号 (活动: {campaign_name})")
-                    
-                    if logo_col_idx is not None:
-                        cell_value = row.iloc[logo_col_idx] if logo_col_idx < len(row) else ''
-                        logo_asset = str(cell_value).strip() if pd.notna(cell_value) and str(cell_value).strip() != '' else ''
+                    # 直接从 activity 字典中获取之前保存好的 logo_asset
+                    logo_asset = activity.get('logo_asset', '')
                     
                     campaign_name_normalized = str(campaign_name).lower()
                     
