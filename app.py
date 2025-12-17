@@ -55,9 +55,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         os.unlink(input_file)
         return None
     
+    error_container = st.container()
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
-    error_container = st.container()
     errors_found = []  # 初始化错误列表
 
     # 大 expander 包裹所有详细日志
