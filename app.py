@@ -583,7 +583,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     
                     if logo_col_idx is not None:
                         cell_value = row.iloc[logo_col_idx] if logo_col_idx < len(row) else ''
-                        logo_asset = str(cell_value).strip() if pd.notna(cell_value) and str(cell_value).strip() != '
+                        logo_asset = str(cell_value).strip() if pd.notna(cell_value) and str(cell_value).strip() != '' else ''
                     
                     campaign_name_normalized = str(campaign_name).lower()
                     
