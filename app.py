@@ -57,8 +57,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
     
     # Fill NaN with empty string
     df_survey = df_survey.fillna('')
+
+    # ================= 必须加上这行 =================
+    # 定义错误容器，让它位于所有日志和表格的上方
     error_container = st.container()
-    errors_found = []  # <--- 新增：用于记录所有的缺失项错误
+    # ===============================================
+    
+    errors_found = []  # 初始化错误列表
 
     # 大 expander 包裹所有详细日志
     with st.expander("查看详细日志", expanded=False):
