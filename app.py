@@ -316,6 +316,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             campaign_col = col_idx
                         elif 'cpc' in col_str:
                             cpc_col = col_idx
+                        elif '预算' in col_str:
+                            budget_col = col_idx
                         elif '视频媒体' in col_str and '编号' in col_str:  # 新增：匹配“视频媒体编号”列
                             video_media_col = col_idx
                         elif '自定义图片' in col_str:  # 新增：匹配“自定义图片”列
@@ -363,6 +365,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             'campaign_name': campaign_name,
                             'cpc': cpc,
                             'asins': asins_str,
+                            'budget': str(row.iloc[budget_col]).strip() if budget_col is not None else '12',
                             'video_asset': video_asset,  # 新增：保存视频
                             'custom_image': custom_image,  # 新增：保存自定义图片
                             'logo_asset': logo_asset
@@ -579,6 +582,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 else:
                     # Original Brand (SB/SBV) generation logic - with regional keyword rules
                     cpc = float(activity['cpc']) if activity['cpc'] != '' else default_bid
+                    brand_budget = float(activity['budget']) if activity['budget'] != '' else 12
                     asins_str = activity.get('asins', '')
                     video_asset = activity.get('video_asset', '')  # 新增：从 activity 获取
                     custom_image = activity.get('custom_image', '')  # 新增：从 activity 获取
@@ -606,7 +610,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     
                     # Row1: 广告活动
                     row1 = [product_brand, '广告活动', operation, campaign_name, '', '', campaign_name, '', '', status, 
-                            global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), 12, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '']
+                            global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), brand_budget, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '']
                     brand_rows.append(row1)
                     
                     # Row2: 广告组
