@@ -333,8 +333,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     
                     # 【新增】提取当前行的落地页类型。如果没填，则根据大区域自动补全
                     row_landing_type = str(row.iloc[landing_type_col]).strip() if landing_type_col is not None else ''
-                    if not row_landing_type:
-                        landing_type = activity.get('landing_type', '品牌旗舰店')
+
                     asins_list = []
                     for col in asins_cols:  # 用列表asins_cols
                         cell_val = str(row.iloc[col]).strip()
@@ -597,7 +596,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     video_asset = activity.get('video_asset', '')  # 新增：从 activity 获取
                     custom_image = activity.get('custom_image', '')  # 新增：从 activity 获取
                     landing_url = global_settings.get('landing_url', '')
-                    landing_type = activity.get('landing_type', '品牌旗舰店')
+                    landing_type = activity.get('landing_type', '')
                     brand_name = global_settings.get('brand_name', '')
                     creative_title = global_settings.get('creative_title', '')
                     
@@ -634,7 +633,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row3 = [product_brand, '品牌视频广告', operation,
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
-                                landing_url, '品牌旗舰店', brand_name, 'False', logo_asset, creative_title,
+                                landing_url, landing_type, brand_name, 'False', logo_asset, creative_title,
                                 asins_str, video_asset, custom_image]
                         brand_rows.append(row3)
 
@@ -643,7 +642,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row3 = [product_brand, '商品集广告', operation,
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
-                                landing_url, '品牌旗舰店', brand_name, 'False', logo_asset, creative_title,
+                                landing_url, landing_type, brand_name, 'False', logo_asset, creative_title,
                                 asins_str, video_asset, custom_image]
                         brand_rows.append(row3)
 
@@ -652,7 +651,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         row3 = [product_brand, '视频广告', operation,
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
-                                '', '商品详情页', '', 'False', '', '',
+                                '', landing_type, '', 'False', '', '',
                                 asins_str, video_asset, '']
                         brand_rows.append(row3)
                     
