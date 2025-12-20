@@ -308,10 +308,10 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     campaign_col = None
                     cpc_col = None
                     budget_col = None # 确保预算列也在
-                    landing_type_col = None
                     asins_cols = [3, 4, 5]
                     video_media_col = None  # 新增：初始化视频媒体列索引
                     custom_image_col = None  # 新增：初始化自定义图片列索引
+                    landing_type_col = None
                     for col_idx, col_name in enumerate(activity_df.columns):
                         col_str = str(col_name).strip().lower()
                         if '广告活动名称' in col_str:
@@ -334,7 +334,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     # 【新增】提取当前行的落地页类型。如果没填，则根据大区域自动补全
                     row_landing_type = str(row.iloc[landing_type_col]).strip() if landing_type_col is not None else ''
                     if not row_landing_type:
-                        row_landing_type = '品牌旗舰店' if '旗舰店' in target_theme or '商品集' in target_theme else '商品详情页'
+                        landing_type = activity.get('landing_type', '品牌旗舰店')
                     asins_list = []
                     for col in asins_cols:  # 用列表asins_cols
                         cell_val = str(row.iloc[col]).strip()
