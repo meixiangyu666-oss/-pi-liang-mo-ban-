@@ -199,7 +199,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             '广告活动名称', '广告组名称', '广告名称', '状态', '品牌实体编号', 
             '预算类型', '预算', '商品位置', '竞价', '关键词文本', '匹配类型', '拓展商品投放编号', 
             '落地页 URL', '落地页类型', '品牌名称', '同意翻译', '品牌徽标素材编号', 
-            '创意素材标题', '创意素材 ASIN', '视频素材编号', '自定义图片'
+            '创意素材标题', '创意素材 ASIN', '视频素材编号', '自定义图片'，'落地页 ASIN'
         ]
         
         # Output columns for SP - based on header-B_US (25 columns)
@@ -619,12 +619,12 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     
                     # Row1: 广告活动
                     row1 = [product_brand, '广告活动', operation, campaign_name, '', '', campaign_name, '', '', status, 
-                            global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), brand_budget, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '']
+                            global_settings.get('entity_id', ''), global_settings.get('budget_type', '每日'), brand_budget, '在亚马逊上出售', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
                     brand_rows.append(row1)
                     
                     # Row2: 广告组
                     row2 = [product_brand, '广告组', operation, campaign_name, campaign_name, '', campaign_name, campaign_name, '', status, 
-                            '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+                            '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
                     brand_rows.append(row2)
                     
                     # Row3: 广告实体层级（品牌视频广告 / 商品集广告 / 视频广告） - 按主题分开处理，避免共用逻辑
@@ -634,7 +634,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
                                 landing_url, landing_type, brand_name, 'False', logo_asset, creative_title,
-                                asins_str, video_asset, custom_image]
+                                asins_str, video_asset, custom_image, '']
                         brand_rows.append(row3)
 
                     elif 'SB落地页：商品集' in target_theme:
@@ -643,7 +643,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
                                 landing_url, landing_type, brand_name, 'False', logo_asset, creative_title,
-                                asins_str, video_asset, custom_image]
+                                asins_str, video_asset, custom_image, '']
                         brand_rows.append(row3)
 
                     elif 'SBV落地页：商品详情页' in target_theme:
@@ -652,7 +652,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                                 '', '', '', '', '', '', '', '',
                                 '', landing_type, '', 'False', '', '',
-                                asins_str, video_asset, '']
+                                asins_str, video_asset, '', '']
                         brand_rows.append(row3)
                     
                     else:
@@ -705,7 +705,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         if keywords:
                             for kw in keywords:
                                 row_keyword = [product_brand, '关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
-                                            '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '']
+                                            '', '', '', '', cpc, kw, match_type, '', '', '', '', '', '', '', '', '', '', '']
                                 brand_rows.append(row_keyword)
                         else:
                             st.warning(f"  无关键词数据，跳过生成关键词层级 (活动: {campaign_name})")
@@ -765,7 +765,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                     st.write(f"  {m_type} 否定关键词数量: {len(kws)}")
                                 for kw in kws:
                                     row_neg = [product_brand, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', status, 
-                                            '', '', '', '', '', kw, m_type, '', '', '', '', '', '', '', '', '', '']
+                                            '', '', '', '', '', kw, m_type, '', '', '', '', '', '', '', '', '', '', '']
                                     brand_rows.append(row_neg)
                     
                     # ASIN group: generate 商品定向 and 否定商品定向
@@ -784,18 +784,18 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         if asin_targets:
                             for asin in asin_targets:
                                 row_product_target = [product_brand, '商品定向', operation, campaign_name, campaign_name, '', '', campaign_name, '', status, 
-                                                    '', '', '', '', cpc, '', '', f'asin="{asin}"', '', '', '', '', '', '', '', '', '']
+                                                    '', '', '', '', cpc, '', '', f'asin="{asin}"', '', '', '', '', '', '', '', '', '', '']
                                 brand_rows.append(row_product_target)
                         
                         # 否定商品定向: from global neg_asin and neg_brand
                         for neg in neg_asin:
                             row_neg_product = [product_brand, '否定商品定向', operation, campaign_name, campaign_name, '', '', campaign_name, '', status, 
-                                            '', '', '', '', '', '', '', f'asin="{neg}"', '', '', '', '', '', '', '', '', '']
+                                            '', '', '', '', '', '', '', f'asin="{neg}"', '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_neg_product)
                         
                         for negb in neg_brand:
                             row_neg_brand = [product_brand, '否定商品定向', operation, campaign_name, campaign_name, '', '', campaign_name, '', status, 
-                                            '', '', '', '', '', '', '', f'brand="{negb}"', '', '', '', '', '', '', '', '', '']
+                                            '', '', '', '', '', '', '', f'brand="{negb}"', '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_neg_brand)
         
         # Create DFs
