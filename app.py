@@ -199,7 +199,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             '广告活动名称', '广告组名称', '广告名称', '状态', '品牌实体编号', 
             '预算类型', '预算', '商品位置', '竞价', '关键词文本', '匹配类型', '拓展商品投放编号', 
             '落地页 URL', '落地页类型', '品牌名称', '同意翻译', '品牌徽标素材编号', 
-            '创意素材标题', '创意素材 ASIN', '视频素材编号', '自定义图片'，'落地页 ASIN'
+            '创意素材标题', '创意素材 ASIN', '视频素材编号', '自定义图片', '落地页 ASIN'
         ]
         
         # Output columns for SP - based on header-B_US (25 columns)
