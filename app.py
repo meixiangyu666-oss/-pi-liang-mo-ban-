@@ -307,9 +307,11 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     # 动态获取列索引 for Brand
                     campaign_col = None
                     cpc_col = None
+                    budget_col = None # 确保预算列也在
                     asins_cols = [3, 4, 5]
                     video_media_col = None  # 新增：初始化视频媒体列索引
                     custom_image_col = None  # 新增：初始化自定义图片列索引
+                    landing_type_col = None
                     for col_idx, col_name in enumerate(activity_df.columns):
                         col_str = str(col_name).strip().lower()
                         if '广告活动名称' in col_str:
@@ -322,10 +324,17 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             video_media_col = col_idx
                         elif '自定义图片' in col_str:  # 新增：匹配“自定义图片”列
                             custom_image_col = col_idx
+                        elif '落地页类型' in col_str: # 【新增】如果列名包含落地页类型，记录它的位置
+                            landing_type_col = col_idx
                     
                     # 提取值
                     campaign_name = str(row.iloc[campaign_col]).strip() if campaign_col is not None else ''
                     cpc = str(row.iloc[cpc_col]).strip() if cpc_col is not None else ''
+                    
+                    # 【新增】提取当前行的落地页类型。如果没填，则根据大区域自动补全
+                    row_landing_type = str(row.iloc[landing_type_col]).strip() if landing_type_col is not None else ''
+                    if not row_landing_type:
+                        landing_type = activity.get('landing_type', '品牌旗舰店')
                     asins_list = []
                     for col in asins_cols:  # 用列表asins_cols
                         cell_val = str(row.iloc[col]).strip()
@@ -368,7 +377,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             'budget': str(row.iloc[budget_col]).strip() if budget_col is not None else '12',
                             'video_asset': video_asset,  # 新增：保存视频
                             'custom_image': custom_image,  # 新增：保存自定义图片
-                            'logo_asset': logo_asset
+                            'logo_asset': logo_asset,
+                            'landing_type': row_landing_type # 【新增】保存到活动信息里
                         }
                         activity_rows.append(activity)
                         st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
@@ -587,7 +597,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     video_asset = activity.get('video_asset', '')  # 新增：从 activity 获取
                     custom_image = activity.get('custom_image', '')  # 新增：从 activity 获取
                     landing_url = global_settings.get('landing_url', '')
-                    landing_type = '品牌旗舰店' if '旗舰店' in target_theme or '商品集' in target_theme else '商品详情页'  # 改：'商品集'分支统一为'品牌旗舰店'
+                    landing_type = activity.get('landing_type', '品牌旗舰店')
                     brand_name = global_settings.get('brand_name', '')
                     creative_title = global_settings.get('creative_title', '')
                     
