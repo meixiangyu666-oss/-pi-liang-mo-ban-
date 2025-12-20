@@ -638,21 +638,33 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         brand_rows.append(row3)
 
                     elif 'SB落地页：商品集' in target_theme:
-                        # 商品集广告（非视频，但需要落地页）
-                        row3 = [product_brand, '商品集广告', operation,
-                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
-                                '', '', '', '', '', '', '', '',
-                                landing_url, landing_type, brand_name, 'False', logo_asset, creative_title,
-                                asins_str, video_asset, custom_image, '']
-                        brand_rows.append(row3)
+                        # 1. 默认设置（常规规则） 
+                        final_landing_url = landing_url
+                        final_creative_asin = asins_str
+                        final_landing_asin = ''
 
-                    elif 'SBV落地页：商品详情页' in target_theme:
-                        # 视频直接投放到商品详情页（Video to PDP） - 完全独立逻辑，不填落地页和品牌名
-                        row3 = [product_brand, '视频广告', operation,
-                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
-                                '', '', '', '', '', '', '', '',
-                                '', landing_type, '', 'False', '', '',
-                                asins_str, video_asset, '', '']
+                        # 2. 应用你的新规则：如果是“商品列表” 
+                        if landing_type == '商品列表':
+                            final_landing_url = ''      # 落地页 URL 为空
+                            final_creative_asin = ''   # 创意素材 ASIN 为空
+                            final_landing_asin = asins_str  # 将原来的 ASIN 填到“落地页 ASIN”列
+                        
+                        # 3. 生成第 28 列数据行 
+                        row3 = [
+                            product_brand, '商品集广告', operation,
+                            campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
+                            '', '', '', '', '', '', '', '',
+                            final_landing_url,     # 对应第19列：落地页 URL
+                            landing_type,          # 对应第20列：落地页类型
+                            brand_name,            # 对应第21列：品牌名称
+                            'False',               # 对应第22列：同意翻译
+                            logo_asset,            # 对应第23列：品牌徽标素材编号
+                            creative_title,        # 对应第24列：创意素材标题
+                            final_creative_asin,   # 对应第25列：创意素材 ASIN
+                            video_asset,           # 对应[cite: 5, 6]：视频素材编号
+                            custom_image,          # 对应[cite: 7]：自定义图片
+                            final_landing_asin     # 对应第28列：落地页 ASIN (新规则核心)
+                        ]
                         brand_rows.append(row3)
                     
                     else:
