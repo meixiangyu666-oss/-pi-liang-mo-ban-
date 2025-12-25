@@ -122,6 +122,14 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                 global_settings['landing_url'] = value
         
         st.write(f"全局设置: {global_settings}")
+
+        # 新增：全局设置验证
+        required_globals = ['creative_title', 'landing_url']  # 可以添加更多如 'entity_id'
+        missing_globals = [k for k in required_globals if not global_settings.get(k)]
+        if missing_globals:
+            st.error(f"全局设置缺失: {', '.join(missing_globals)}。请填写后重试。")
+            os.unlink(input_file)
+            return None
         
         # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
         header_row_full = df_survey.iloc[0].tolist()
@@ -383,6 +391,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         st.write(f"  Brand 活动: {campaign_name}, CPC={cpc}")
 
             st.write(f"Found {len(activity_rows)} activity rows ({target_theme}): {[r['campaign_name'] for r in activity_rows]}")
+
+            # 新增：活动数据验证（通用Brand/SP）
+            required_activity = ['cpc', 'budget']  # 添加更多如 'video_asset', 'logo_asset', 'custom_image', 'sku', 'group_bid'
+            for activity in activity_rows:
+                missing_activity = [k for k in required_activity if k in activity and not activity.get(k)]  # 只检查存在的key
+                if missing_activity:
+                    st.warning(f"活动 '{activity['campaign_name']}' 缺失: {', '.join(missing_activity)}。使用默认值，但建议填写。")
             
             
             # Generate rows for this region
@@ -549,7 +564,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                     asin_targets = list(dict.fromkeys(asin_targets))
                                     st.write(f"  商品定向 ASIN 数量: {len(asin_targets)} (示例: {asin_targets[:2] if asin_targets else '无'})")
                                     break
-                            
+
+                    # 新增：ASIN活动验证
+                    if is_asin and not asin_targets:
+                        st.error(f"ASIN活动 '{campaign_name}' 缺少商品定向ASIN（对应列为空）。请填写后重试。")
+                        os.unlink(input_file)
+                        return None
+
                         if asin_targets:
                             for asin in asin_targets:
                                 row_product_target = [product_sp, '商品定向', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
@@ -803,6 +824,12 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                     asin_targets = list(dict.fromkeys(asin_targets))
                                     st.write(f"  商品定向 ASIN 数量: {len(asin_targets)} (示例: {asin_targets[:2] if asin_targets else '无'})")
                                     break
+
+                    # 新增：ASIN活动验证
+                    if is_asin and not asin_targets:
+                        st.error(f"ASIN活动 '{campaign_name}' 缺少商品定向ASIN（对应列为空）。请填写后重试。")
+                        os.unlink(input_file)
+                        return None
                         
                         if asin_targets:
                             for asin in asin_targets:
