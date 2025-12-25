@@ -443,6 +443,14 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     if not str(activity.get('landing_type', '')).strip():
                         validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '落地页类型'")
 
+                    # 4. 检查创意素材 ASIN (D、E、F 列)
+                    # 只要是 旗舰店、详情页、商品集 这三类，ASIN 不能为空
+                    check_asin_themes = ['品牌旗舰店', '商品详情页', '商品集']
+                    if any(x in target_theme for x in check_asin_themes):
+                        # activity['asins'] 是从 D/E/F 列提取并合并的字符串
+                        if not str(activity.get('asins', '')).strip():
+                            validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '创意素材 ASIN' (请检查 D、E、F 列是否填写)")
+
                 # C. ASIN 定向智能检查
                 temp_name_check = str(campaign_name).lower()
                 is_asin_check = any(x in temp_name_check for x in ['asin'])
