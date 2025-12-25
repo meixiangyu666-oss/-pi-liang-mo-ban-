@@ -642,7 +642,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             product_brand, '视频广告', operation,
                             campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                             '', '', '', '', '', '', '', '',
-                            landing_url, landing_type or '', brand_name, 'False',
+                            '', landing_type or '', '', 'False',
                             logo_asset, creative_title,
                             asins_str, video_asset, custom_image, ''
                         ]
