@@ -637,16 +637,6 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                 asins_str, video_asset, custom_image, '']
                         brand_rows.append(row3)
 
-                    elif 'SBV落地页：商品详情页' in target_theme:
-                        # 规则 B：商品详情页视频广告（根据你的需求修改层级名称，例如改为“视频广告”）
-                        # 你可以在这里调整字段顺序或列内容
-                        row3 = [product_brand, '视频广告', operation, 
-                                campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
-                                '', '', '', '', '', '', '', '',
-                                '', landing_type, '', 'False', '', '',
-                                asins_str, video_asset, '', '']
-                        brand_rows.append(row3)
-
                     elif 'SB落地页：商品集' in target_theme:
                         # 1. 默认设置（常规规则） 
                         final_landing_url = landing_url
