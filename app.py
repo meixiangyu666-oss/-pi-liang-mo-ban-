@@ -55,8 +55,13 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         os.unlink(input_file)
         return None
     
-    # Fill NaN with empty string
+    #Fill NaN with empty string
     df_survey = df_survey.fillna('')
+
+    # ======== 【修改 1：建立外部显示区】 ========
+    # 在 expander 外面建立一个容器，专门用来显示错误，这样不用点开折叠框也能看到
+    error_area = st.container()
+    # =========================================
 
     # 大 expander 包裹所有详细日志
     with st.expander("查看详细日志", expanded=False):
@@ -123,19 +128,17 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         
         st.write(f"全局设置: {global_settings}")
         
-        # [修改 1] =========== 全局设置必填检查 ===========
-        # 定义必须存在的全局字段
+        # ======== 【修改 1 更新版】全局设置检查 ========
         required_globals = ['creative_title', 'landing_url']
-        # 找出缺失项
         missing_globals = [k for k in required_globals if not global_settings.get(k)]
         
         if missing_globals:
-            st.error(f"❌ 【严重错误】全局设置缺失！")
-            st.error(f"请检查 Excel 前 20 行，确保填写了以下内容: {missing_globals}")
-            st.warning("⚠️ 程序已终止，请完善信息后重新上传。")
-            os.unlink(input_file) # 删除临时文件
-            return None # 强制退出函数，不再继续执行
-        # ===============================================
+            # 注意这里变了：使用 error_area 在外部显示
+            error_area.error(f"❌ 【严重错误】全局设置缺失！请在 Excel 前 20 行填写 {missing_globals}")
+            error_area.warning("⚠️ 由于缺失全局设置，程序已终止，请修改 Excel 后重新上传。")
+            os.unlink(input_file)
+            return None
+        # =============================================
         
         # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
         header_row_full = df_survey.iloc[0].tolist()
@@ -886,16 +889,17 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                             '', '', '', '', '', '', '', f'brand="{negb}"', '', '', '', '', '', '', '', '', '', '']
                             brand_rows.append(row_neg_brand)
         
-        # ======== 【第4处插入：开始】 ========
-        # 3. 最终阻断逻辑
+        # ======== 【修改 4 更新版】最终错误拦截 ========
         if validation_errors:
-            st.error("❌ 检测到 Excel 模版填写不完整，已停止生成！请修复以下问题：")
-            for err in validation_errors:
-                st.write(err)
+            # 使用 with error_area 确保这一堆错误都显示在外面
+            with error_area:
+                st.error("🚫 检测到 Excel 模版填写不完整，已停止生成！请修复以下问题：")
+                for err in validation_errors:
+                    st.error(err) # 这里每一条错误都会列在最显眼的地方
             
             os.unlink(input_file)
             return None
-        # ======== 【第4处插入：结束】 ========
+        # =============================================
         
         # Create DFs
         df_brand = pd.DataFrame(brand_rows, columns=output_columns_brand) if brand_rows else pd.DataFrame(columns=output_columns_brand)
