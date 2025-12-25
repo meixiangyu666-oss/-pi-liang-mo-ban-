@@ -643,8 +643,8 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                             campaign_name, campaign_name, campaign_name, '', '', campaign_name, status,
                             '', '', '', '', '', '', '', '',
                             '', landing_type or '', '', 'False',
-                            logo_asset, creative_title,
-                            asins_str, video_asset, custom_image, ''
+                            logo_asset, '',
+                            asins_str, video_asset, '', ''
                         ]
                         brand_rows.append(row3)
 
