@@ -429,13 +429,17 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '广告组默认竞价'")
                 else:
                     # Brand 检查
+                    # 1. 视频检查：如果是视频广告，必须有视频 ID
                     if '品牌旗舰店' in target_theme or '商品详情页' in target_theme:
                          if not str(activity.get('video_asset', '')).strip():
                             validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '视频媒体编号'")
                     
-                    if not str(activity.get('logo_asset', '')).strip():
-                         validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '品牌徽标素材编号'")
+                    # 2. Logo 检查：【修改这里】排除 "商品详情页"，只有其他类型才查 Logo
+                    if '商品详情页' not in target_theme:
+                        if not str(activity.get('logo_asset', '')).strip():
+                            validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '品牌徽标素材编号'")
                     
+                    # 3. 落地页类型检查
                     if not str(activity.get('landing_type', '')).strip():
                         validation_errors.append(f"❌ 活动 [{campaign_name}]: 缺少 '落地页类型'")
 
