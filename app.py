@@ -128,17 +128,42 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         
         st.write(f"全局设置: {global_settings}")
         
-        # ======== 【修改 1 更新版】全局设置检查 ========
-        required_globals = ['creative_title', 'landing_url']
-        missing_globals = [k for k in required_globals if not global_settings.get(k)]
+        # ======== 【修改 1 更新版：按需检查全局设置】Start ========
         
-        if missing_globals:
-            # 注意这里变了：使用 error_area 在外部显示
-            error_area.error(f"❌ 【严重错误】全局设置缺失！请在 Excel 前 20 行填写 {missing_globals}")
-            error_area.warning("⚠️ 由于缺失全局设置，程序已终止，请修改 Excel 后重新上传。")
-            os.unlink(input_file)
-            return None
-        # =============================================
+        # 1. 定义哪些主题必须依赖全局设置 (只有这俩才强制要求 标题 和 URL)
+        strict_themes = ['SB落地页：商品集', 'SBV落地页：品牌旗舰店']
+        
+        # 2. 预扫描：检测这些主题下是否有活动数据
+        has_strict_activities = False
+        for theme in strict_themes:
+            # 复用已有的 find_region_start_end 函数探测区域
+            # (h_row, e_row) 分别是 header行索引 和 结束行索引
+            h_row, e_row = find_region_start_end(df_survey, theme)
+            
+            # 逻辑：如果找到了区域 (h_row不是None) 并且 结束行 > header行 (说明中间有数据行)
+            if h_row is not None and e_row > h_row:
+                has_strict_activities = True
+                st.write(f"🔍 触发全局检查: 检测到包含 '{theme}' 活动，全局设置变为必填。")
+                break # 只要发现一个需要的主题，就必须检查，不用继续找了
+        
+        # 3. 执行检查逻辑
+        if has_strict_activities:
+            # 如果有相关活动，这俩就是必填项
+            required_globals = ['creative_title', 'landing_url']
+            missing_globals = [k for k in required_globals if not global_settings.get(k)]
+            
+            if missing_globals:
+                # 使用 error_area 在外部显示错误
+                error_area.error(f"❌ 【严重错误】全局设置缺失！")
+                error_area.error(f"原因：你的 Excel 中包含“商品集”或“品牌旗舰店”活动，这些活动强制要求在全局设置中填写：{missing_globals}")
+                error_area.warning("⚠️ 程序已终止，请完善信息后重新上传。")
+                os.unlink(input_file)
+                return None
+        else:
+            # 如果全是 SP 或者 SBV-商品详情页，则不检查
+            st.info("ℹ️ 本次上传仅包含 SP 或 详情页广告，已跳过“创意素材标题/落地页URL”的必填检查。")
+            
+        # ======== 【修改 1 更新版：按需检查全局设置】End ========
         
         # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
         header_row_full = df_survey.iloc[0].tolist()
