@@ -128,19 +128,21 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
         
         st.write(f"全局设置: {global_settings}")
         
-        # ======== 【修改 1 强力调试版：精准锁定“广告活动名称”列】Start ========
+        # ======== 【修改 1 终极显眼版：错误直接展示】Start ========
         
         # 1. 定义哪些主题必须依赖全局设置
         strict_themes = ['SB落地页：商品集', 'SBV落地页：品牌旗舰店']
         
-        # 2. 预扫描
+        # 2. 预扫描 & 捕获证据
         has_strict_activities = False
+        culprit_theme = None    # 记录出问题的区域名
+        culprit_data = None     # 记录出问题的具体数据
         
         for theme in strict_themes:
             h_row, e_row = find_region_start_end(df_survey, theme)
             
             if h_row is not None and e_row > h_row:
-                # A. 找“广告活动名称”这一列的索引
+                # A. 找“广告活动名称”列
                 header_vals = df_survey.iloc[h_row]
                 target_col_idx = -1
                 for idx, val in enumerate(header_vals):
@@ -148,48 +150,53 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         target_col_idx = idx
                         break
                 
-                # B. 检查该列内容
+                # B. 检查内容
                 if target_col_idx != -1:
-                    # 提取数据 (从 header行+1 到 结束行)
                     col_data = df_survey.iloc[h_row + 1 : e_row + 1, target_col_idx]
                     
-                    # --- 🕵️ 调试信息开始 (帮你找出哪里有隐藏字符) ---
-                    # 转换成字符串并去空格
+                    # 清洗数据
                     clean_series = col_data.astype(str).str.strip()
-                    # 找出非空的值 (如果不为空，说明有数据)
                     non_empty_values = clean_series[clean_series != '']
                     
                     if not non_empty_values.empty:
                         has_strict_activities = True
-                        st.error(f"⚠️ 在 '{theme}' 发现有效活动！")
-                        st.write("👇 程序检测到的内容如下（请检查 Excel 对应行）：")
-                        st.write(non_empty_values) # 把检测到的“幽灵数据”打印出来
-                        st.write(f"对应行号（Excel显示行号需+2）：{non_empty_values.index}")
+                        # 🔴 关键修改：把抓到的数据保存到变量里，待会儿在外面显示
+                        culprit_theme = theme
+                        culprit_data = non_empty_values 
+                        
+                        # 同时也记录在日志里
+                        st.write(f"⚠️ [日志] 在 '{theme}' 发现数据: {non_empty_values.to_dict()}")
                         break 
-                    else:
-                        # 只有真的全是空的时候，才会显示这个
-                        st.write(f"✅ '{theme}' 区域的“广告活动名称”列是空的（检测通过）。")
-                    # --- 🕵️ 调试信息结束 ---
 
-                else:
-                    st.warning(f"⚠️ 在 '{theme}' 区域没找到“广告活动名称”这一列，跳过检测。")
-
-        # 3. 执行报错
+        # 3. 执行报错（直接在 error_area 显示证据）
         if has_strict_activities:
             required_globals = ['creative_title', 'landing_url']
             missing_globals = [k for k in required_globals if not global_settings.get(k)]
             
             if missing_globals:
                 error_area.error(f"❌ 【严重错误】全局设置缺失！")
-                error_area.error(f"原因：上述调试信息显示，'{theme}' 区域里确实有数据。")
-                error_area.error(f"请检查打印出来的那些单元格，可能包含空格或遗留字符。")
-                # 暂停生成
+                
+                # 🔴 这里直接把抓到的“幽灵数据”打印在最显眼的地方
+                if culprit_data is not None:
+                    error_area.warning(f"👇 触发原因：程序在 '{culprit_theme}' 区域的“广告活动名称”列，检测到了以下内容：")
+                    
+                    # 格式化显示行号和内容
+                    evidence_df = pd.DataFrame({
+                        'Excel 行号 (预估)': [i + 2 for i in culprit_data.index], # 索引+2 等于 Excel行号
+                        '单元格内容': culprit_data.values
+                    })
+                    error_area.table(evidence_df) # 以表格形式展示
+                    
+                    error_area.write("💡 提示：请回到 Excel 找到上述行号，选中单元格按 Delete 键清除（即使看起来是空的，可能包含空格）。")
+
+                error_area.error(f"由于存在上述活动，您必须填写全局设置：{missing_globals}")
+                
                 os.unlink(input_file)
                 return None
         else:
-            st.info("ℹ️ 全局设置检查通过：未检测到需要必填信息的活动。")
+            st.info("ℹ️ 全局设置检查通过（未检测到需强制校验的活动）。")
             
-        # ======== 【修改 1 强力调试版：精准锁定“广告活动名称”列】End ========
+        # ======== 【修改 1 终极显眼版：错误直接展示】End ========
         
         # Keyword columns: from header row (iloc[0]), but dynamic like test SB.py
         header_row_full = df_survey.iloc[0].tolist()
