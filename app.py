@@ -367,8 +367,26 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                     budget = str(row.iloc[budget_col]).strip() if budget_col is not None else ''
                     group_bid = str(row.iloc[group_bid_col]).strip() if group_bid_col is not None else ''
                     ad_position = str(row.iloc[ad_position_col]).strip() if ad_position_col is not None else ''
-                    percentage = str(int(float(row.iloc[percentage_col]))) if percentage_col is not None and pd.notna(row.iloc[percentage_col]) and row.iloc[percentage_col] != '' else ''
-                    
+                    # ✅ 替换为这段代码（带有错误捕获和日志功能）
+                    percentage = ''
+                    if percentage_col is not None:
+                        # 获取原始值
+                        raw_val = row.iloc[percentage_col]
+                        
+                        # 只有当单元格不为空时才处理
+                        if pd.notna(raw_val) and str(raw_val).strip() != '':
+                            raw_str = str(raw_val).strip()
+                            try:
+                                # 尝试处理：去除百分号，转小数，再取整
+                                # 例子：输入 "50%" -> "50" -> 50.0 -> 50 -> "50"
+                                percentage = str(int(float(raw_str.replace('%', ''))))
+                            except ValueError:
+                                # 捕获错误！
+                                # 1. 不让程序崩溃
+                                # 2. 将具体的错误信息添加到 validation_errors 列表中
+                                # 这样最后程序会统一弹窗提示，而不会中断
+                                validation_errors.append(f"❌ 活动 [{campaign_name}]: '百分比' 列数据错误！当前填写内容为: '{raw_str}'。请改为纯数字 (例如: 50)。")
+                                percentage = '' # 置空，避免后续逻辑出错                    
                     if campaign_name:
                         activity = {
                             'campaign_name': campaign_name,
