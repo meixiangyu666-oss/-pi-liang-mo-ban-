@@ -350,7 +350,7 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                         elif 'cpc' in col_str:
                             cpc_col = col_idx
                         elif 'sku' in col_str:
-                            sku_col = col_idx
+                            sku_col = 3
                         elif '预算' in col_str:
                             budget_col = col_idx
                         elif '广告组默认竞价' in col_str:
