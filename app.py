@@ -729,52 +729,52 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
                                                 '', '', '', '', '', '', '', '', '', f'brand="{negb}"']
                                 sp_rows.append(row_neg_brand)
 
-                    # 新增：为 SP-ASIN 添加否定关键词 (从 AJ 和 AK 列)
-                    # Select columns for ASIN negatives: AJ (否精准), AK (否词组)
-                    asin_neg_cols = ['AJ', 'AK']
-                    
-                    # Collect data, track sources for duplicates
-                    asin_neg_data_sources = {
-                        '否定精准匹配': defaultdict(list),  # kw -> [col_keys]
-                        '否定词组': defaultdict(list)
-                    }
-                    for col_key in asin_neg_cols:
-                        if col_indices.get(col_key) is not None:
-                            col_idx = col_indices[col_key]
-                            col_data = [str(kw).strip() for kw in df_survey.iloc[:, col_idx].dropna() if str(kw).strip()]
-                            col_data = list(dict.fromkeys(col_data))  # column dedup
-                            m_type = '否定精准匹配' if col_key == 'AJ' else '否定词组'
-                            for kw in col_data:
-                                asin_neg_data_sources[m_type][kw].append(col_key)
-                    
-                    # Check duplicates: kw with multiple sources
-                    duplicates_detected = False
-                    for m_type, kw_sources in asin_neg_data_sources.items():
-                        for kw, sources in kw_sources.items():
-                            if len(sources) > 1:
-                                duplicates_detected = True
-                                source_names = [col_names_dict.get(s, s) for s in sources]
-                                st.error(f"\n=== 检测到重复否定关键词 (ASIN) ===")
-                                st.error(f"活动: {campaign_name}")
-                                st.error(f"类型: {m_type}")
-                                st.error(f"重复关键词: '{kw}'")
-                                st.error(f"来源列: {', '.join(source_names)}")
-                                st.error(f"原因: 该关键词在多个 ASIN 否定列中出现，导致生成重复行。请检查 survey 文件的这些列并清理重复值。")
-                                st.error("暂停生成 header 表。")
-                                os.unlink(input_file)
-                                return None  # Pause generation
-                    
-                    st.write("\n=== ASIN 否定关键词重复检测完成（无重复）===")
-                    
-                    # Generate rows: deduped kws
-                    for m_type, kw_sources in asin_neg_data_sources.items():
-                        kws = list(kw_sources.keys())
-                        if kws:
-                            st.write(f"  {m_type} ASIN 否定关键词数量: {len(kws)}")
-                        for kw in kws:
-                            row_neg = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
-                                    '', '', '', '', kw, m_type, '', '', '', '']
-                            sp_rows.append(row_neg)
+                        # 新增：为 SP-ASIN 添加否定关键词 (从 AJ 和 AK 列)
+                        # Select columns for ASIN negatives: AJ (否精准), AK (否词组)
+                        asin_neg_cols = ['AJ', 'AK']
+                        
+                        # Collect data, track sources for duplicates
+                        asin_neg_data_sources = {
+                            '否定精准匹配': defaultdict(list),  # kw -> [col_keys]
+                            '否定词组': defaultdict(list)
+                        }
+                        for col_key in asin_neg_cols:
+                            if col_indices.get(col_key) is not None:
+                                col_idx = col_indices[col_key]
+                                col_data = [str(kw).strip() for kw in df_survey.iloc[:, col_idx].dropna() if str(kw).strip()]
+                                col_data = list(dict.fromkeys(col_data))  # column dedup
+                                m_type = '否定精准匹配' if col_key == 'AJ' else '否定词组'
+                                for kw in col_data:
+                                    asin_neg_data_sources[m_type][kw].append(col_key)
+                        
+                        # Check duplicates: kw with multiple sources
+                        duplicates_detected = False
+                        for m_type, kw_sources in asin_neg_data_sources.items():
+                            for kw, sources in kw_sources.items():
+                                if len(sources) > 1:
+                                    duplicates_detected = True
+                                    source_names = [col_names_dict.get(s, s) for s in sources]
+                                    st.error(f"\n=== 检测到重复否定关键词 (ASIN) ===")
+                                    st.error(f"活动: {campaign_name}")
+                                    st.error(f"类型: {m_type}")
+                                    st.error(f"重复关键词: '{kw}'")
+                                    st.error(f"来源列: {', '.join(source_names)}")
+                                    st.error(f"原因: 该关键词在多个 ASIN 否定列中出现，导致生成重复行。请检查 survey 文件的这些列并清理重复值。")
+                                    st.error("暂停生成 header 表。")
+                                    os.unlink(input_file)
+                                    return None  # Pause generation
+                        
+                        st.write("\n=== ASIN 否定关键词重复检测完成（无重复）===")
+                        
+                        # Generate rows: deduped kws
+                        for m_type, kw_sources in asin_neg_data_sources.items():
+                            kws = list(kw_sources.keys())
+                            if kws:
+                                st.write(f"  {m_type} ASIN 否定关键词数量: {len(kws)}")
+                            for kw in kws:
+                                row_neg = [product_sp, '否定关键词', operation, campaign_name, campaign_name, '', '', '', '', campaign_name, campaign_name, '', '', '', status, 
+                                        '', '', '', '', kw, m_type, '', '', '', '']
+                                sp_rows.append(row_neg)
                     
                     # 新增/修复：竞价调整层级（仅SP，为每个活动生成1行，如果条件满足）- 移到if is_asin外
                     row_bid_adjust = None  # 防护：初始化为空，避免UnboundLocalError
