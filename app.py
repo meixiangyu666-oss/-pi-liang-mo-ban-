@@ -248,9 +248,9 @@ def generate_header_for_sbv_brand_store(uploaded_bytes, sheet_name='广告模版
             'Y': 'case精准-否精准',
             'Z': 'case精准-否词组',
             'AC': 'case广泛-否精准',
-            'AD': 'case广泛-否词组'
+            'AD': 'case广泛-否词组',
             'AJ': 'ASIN否精准',
-            'AK': 'ASIN否词组'
+            'AK': 'ASIN否词组',
         }
         
         # Extract neg_asin and neg_brand from specific columns
