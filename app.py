@@ -21,16 +21,24 @@ if not st.session_state['logged_in']:
             st.error("账号或密码错误")
     st.stop() # 强制停止，不让下面的代码运行
 
-# --- 导航栏设置 (插入在登录逻辑之后) ---
+# --- 2. 导航栏 (紧跟在 st.stop() 后面) ---
 st.sidebar.title("🛠️ 工具箱导航")
-# 创建一个选择框，让用户选功能
 choice = st.sidebar.radio("请选择功能：", ["广告上传模版生成", "关键词拆分去重"])
 st.sidebar.divider()
 st.sidebar.button("退出登录", on_click=lambda: st.session_state.update({"logged_in": False}))
 
-# --- 逻辑分流开始 ---
-if choice == "广告上传模版生成":
-    # 这里保持空着，直接进入你原本的代码
+# --- 3. 拦截逻辑：如果选的不是“广告”，就跳过这段代码 ---
+if choice != "广告上传模版生成":
+    # 如果用户选的不是广告生成，下面的代码就先不执行
+    pass 
+else:
+    # 这一行 else 很重要，但如果缩进让你头疼，我们用下面的强制停止法：
+    pass
+
+# --- 4. 更加简单粗暴的写法 (推荐用这个替代上面的 if) ---
+if choice == "关键词拆分去重":
+    # 如果选了关键词，我们直接跳转到文件末尾去运行关键词的代码
+    # 这里我们先什么都不做，让程序继续往下走
     pass
 
 # --- 下面是你原本的代码，不需要做任何逻辑更改 ---
@@ -46,6 +54,7 @@ import tempfile
 import os
 
 # Streamlit App Title and Description
+if choice == "广告上传模版生成":
     st.title("批量广告上传模版-生成工具")
     st.markdown("""
     ### 代码内容说明
