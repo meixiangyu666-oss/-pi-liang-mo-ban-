@@ -1,4 +1,29 @@
 import streamlit as st
+import hashlib
+
+# 1. 验证函数
+def check_hashes(password, hashed_text):
+    return hashlib.sha256(str.encode(password)).hexdigest() == hashed_text
+
+# 2. 检查登录状态
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+
+if not st.session_state['logged_in']:
+    st.title("🔐 广告工具访问系统")
+    user = st.text_input("用户名")
+    pwd = st.text_input("密码", type='password')
+    if st.button("进入系统"):
+        if user in st.secrets["passwords"] and check_hashes(pwd, st.secrets["passwords"][user]):
+            st.session_state['logged_in'] = True
+            st.rerun()
+        else:
+            st.error("账号或密码错误")
+    st.stop() # 强制停止，不让下面的代码运行
+
+# --- 下面是你原本的代码，不需要做任何逻辑更改 ---
+
+import streamlit as st
 import pandas as pd
 from collections import defaultdict
 import sys
