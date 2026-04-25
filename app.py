@@ -3,7 +3,7 @@ import hashlib
 
 # --- 2. 导航栏 (紧跟在 st.stop() 后面) ---
 st.sidebar.title("🛠️ 工具箱导航")
-choice = st.sidebar.radio("请选择功能：", ["广告上传模版生成", "关键词拆分去重"])
+choice = st.sidebar.radio("请选择功能：", ["广告上传模版生成", "关键词拆分去重", "外箱贴自动化工具"])
 st.sidebar.divider()
 st.sidebar.button("退出登录", on_click=lambda: st.session_state.update({"logged_in": False}))
 
@@ -1105,8 +1105,6 @@ if choice == "广告上传模版生成":
                         file_name=filename,
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-    else:
-        st.info("请上传 Excel 文件以开始生成。")
 
 elif choice == "关键词拆分去重":
     st.title("📝 关键词批量拆分去重工具")
@@ -1158,3 +1156,299 @@ elif choice == "关键词拆分去重":
                     file_name=f"unique_keywords_{datetime.now().strftime('%m%d_%H%M')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+                st.stop()  # 👈 【关键】这是关键词工具的刹车
+
+elif choice == "外箱贴自动化工具":
+    import openpyxl
+    from openpyxl.cell.cell import MergedCell
+
+    def save_wb(wb):
+        out = io.BytesIO()
+        wb.save(out)
+        return out.getvalue()
+
+    st.title("📦 Amazon 外箱贴自动化工具")
+    
+    with st.expander("📖 点击查看功能说明与操作指南", expanded=False):
+        st.markdown("""
+        ### 🌟 功能简介
+        本工具专门用于自动化填充亚马逊发货所需的两类表格：
+        1. **FBA 发货模板**：自动从计划表中提取 SKU 和数量，解决手动填表的低效与错误。
+        2. **装箱信息表**：自动分配分箱数量，并根据“快递”或“海运”模式自动填充外箱尺寸与重量。
+        3. **智能换算**：自动识别模板单位（如：磅、英寸），并根据计划表中的数据（KG、CM）进行高精度换算。
+
+        ### 🚀 使用步骤
+        * **第一步：生成 FBA 模板**
+            1. 分别上传《发货计划表》和亚马逊下载的《原始 SKU 空白模板》。
+            2. 点击按钮下载生成好的 FBA 模板，并将其上传至亚马逊后台。
+        * **第二步：生成装箱信息表**
+            1. 在亚马逊后台下载对应的《装箱信息表》。
+            2. 根据物流方式选择 **[快递]** 或 **[海运]**。
+            3. 上传下载好的装箱信息表。
+            4. 点击按钮下载最终的装箱表，检查无误后上传至亚马逊。
+        """)
+
+    if "plan_data" not in st.session_state:
+        st.session_state.plan_data = None
+
+    st.subheader("第一步：生成 FBA 发货模板")
+    c1, c2 = st.columns(2)
+    with c1:
+        plan_file = st.file_uploader("1. 上传《发货计划表》", type=["xlsx"])
+    with c2:
+        fba_template_file = st.file_uploader("2. 上传原始空白《SKU空白模版》", type=["xlsx"])
+
+    def safe_write(ws, row, col, value, protect_formula=True):
+        try:
+            cell = ws.cell(row=row, column=col)
+            if isinstance(cell, MergedCell):
+                for merged_range in ws.merged_cells.ranges:
+                    if cell.coordinate in merged_range:
+                        target_cell = ws.cell(row=merged_range.min_row, column=merged_range.min_col)
+                        if protect_formula and target_cell.value and str(target_cell.value).startswith('='):
+                            return
+                        target_cell.value = value
+                        return
+            else:
+                if protect_formula and cell.value and str(cell.value).startswith('='):
+                    return
+                cell.value = value
+        except:
+            pass
+
+    def parse_box_range(box_val, qty_val):
+        results = []
+        try:
+            if isinstance(box_val, (int, float)) or (isinstance(box_val, str) and box_val.replace('.','',1).isdigit()):
+                results.append((int(float(box_val)), qty_val))
+            elif isinstance(box_val, str) and '-' in box_val:
+                nums = re.findall(r'\d+', box_val)
+                if len(nums) == 2:
+                    start, end = int(nums[0]), int(nums[1])
+                    if start <= end:
+                        for b in range(start, end + 1):
+                            results.append((b, qty_val))
+        except: pass
+        return results
+
+    if plan_file and fba_template_file:
+        raw_df = pd.read_excel(plan_file)
+        box_info = {}   
+        box_header_row_idx = -1
+        box_col_map = {}
+        
+        for idx, row in raw_df.iterrows():
+            row_vals = [str(x).strip() for x in row if pd.notna(x)]
+            if any("尺寸" in val for val in row_vals) and any("箱号" in val for val in row_vals):
+                box_header_row_idx = idx
+                for c_idx, cell_val in enumerate(row):
+                    val_str = str(cell_val).strip()
+                    if "箱号" in val_str: box_col_map['box_num'] = c_idx
+                    if "尺寸" in val_str: box_col_map['dim'] = c_idx
+                    if "重量" in val_str: box_col_map['weight'] = c_idx
+                break
+
+        if box_header_row_idx != -1 and 'dim' in box_col_map:
+            for idx in range(box_header_row_idx + 1, len(raw_df)):
+                row = raw_df.iloc[idx]
+                dim_val = str(row.iloc[box_col_map['dim']]) if pd.notna(row.iloc[box_col_map['dim']]) else ""
+                if '*' in dim_val:
+                    dims = [float(d) for d in re.findall(r'\d+\.?\d*', dim_val)]
+                    if len(dims) == 3:
+                        b_num = None
+                        if 'box_num' in box_col_map:
+                            b_val = row.iloc[box_col_map['box_num']]
+                            if pd.notna(b_val) and str(b_val).replace('.','',1).isdigit():
+                                b_num = int(float(b_val))
+                        if b_num is None: continue
+                        w_val = 0.0
+                        if 'weight' in box_col_map:
+                            raw_w = row.iloc[box_col_map['weight']]
+                            if pd.notna(raw_w) and str(raw_w).replace('.','',1).isdigit():
+                                w_val = float(raw_w)
+                        box_info[b_num] = {"dim": dims, "weight": w_val}
+        else:
+            for idx, row in raw_df.iterrows():
+                col1_val = str(row.iloc[0]) if pd.notna(row.iloc[0]) else ""
+                col2_val = str(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else ""
+                if col1_val and '-' in col1_val and len(col1_val) > 5: continue
+                target_str = col2_val if '*' in col2_val else col1_val
+                if '*' in target_str:
+                    dims = [float(d) for d in re.findall(r'\d+\.?\d*', target_str)]
+                    if len(dims) == 3:
+                        b_num = len(box_info) + 1
+                        try:
+                            if col1_val.strip().isdigit(): b_num = int(col1_val.strip())
+                        except: pass
+                        w_val = row.iloc[2] if len(row) > 2 else 0
+                        if pd.isna(w_val) and len(row) > 3: w_val = row.iloc[3]
+                        w = float(w_val) if pd.notna(w_val) else 0.0
+                        box_info[b_num] = {"dim": dims, "weight": w}
+
+        st.session_state.box_info = box_info
+        st.success(f"✅ 成功提取 {len(box_info)} 箱的尺寸和重量信息")
+
+        df = raw_df.dropna(subset=['店铺SKU'])
+        df = df[~df['店铺SKU'].astype(str).str.contains('\*')] 
+        target_col = [c for c in df.columns if '实际发货数量' in str(c)][0]
+        st.session_state.plan_data = df[df[target_col] > 0]
+
+        used_boxes = set()
+        sku_df = st.session_state.plan_data
+        box_cols = [c for c in sku_df.columns if '箱号' in str(c)]
+        
+        for _, row in sku_df.iterrows():
+            for col in box_cols:
+                if pd.notna(row[col]):
+                    for b_num, _ in parse_box_range(row[col], 1):
+                        used_boxes.add(b_num)
+        
+        if used_boxes or box_info:
+            all_relevant_boxes = used_boxes | set(box_info.keys())
+            max_b = max(all_relevant_boxes) if all_relevant_boxes else 0
+            expected_seq = set(range(1, max_b + 1))
+            missing_skus = sorted(list(expected_seq - used_boxes))
+            missing_dims = sorted(list(used_boxes - set(box_info.keys())))
+
+            if missing_skus:
+                st.error(f"❌ **逻辑错误：第 {missing_skus} 箱没有任何产品！**")
+                st.warning(f"检测到最大箱号为 {max_b}，但中间箱号分配不连续。系统已拦截文件生成。")
+                st.info("💡 请修改《发货计划表》确保箱号连续，然后重新上传。")
+                st.stop()
+
+            if missing_dims:
+                st.warning(f"⚠️ **数据缺失：箱号 {missing_dims} 缺少底部的重量尺寸信息！**")
+
+            if not missing_skus and not missing_dims and max_b > 0:
+                st.success(f"✨ 交叉校验/分配通过：1 到 {max_b} 箱。")
+
+        fba_wb = openpyxl.load_workbook(fba_template_file)
+        fba_ws = fba_wb['Template'] if 'Template' in fba_wb.sheetnames else fba_wb.active
+        
+        header_row_fba, sku_col_fba, qty_col_fba = 0, 1, 2
+        for r in range(1, 25):
+            row_vals = [str(fba_ws.cell(row=r, column=c).value) for c in range(1, 15)]
+            if "Merchant SKU" in row_vals:
+                header_row_fba, sku_col_fba = r, row_vals.index("Merchant SKU") + 1
+                for idx, val in enumerate(row_vals):
+                    if "Quantity" in val and "Units" not in val:
+                        qty_col_fba = idx + 1
+                break
+
+        if header_row_fba > 0:
+            if fba_ws.max_row > header_row_fba:
+                fba_ws.delete_rows(header_row_fba + 1, fba_ws.max_row)
+            curr_row = header_row_fba + 1
+            for _, row_data in st.session_state.plan_data.iterrows():
+                safe_write(fba_ws, curr_row, sku_col_fba, row_data['店铺SKU'])
+                safe_write(fba_ws, curr_row, qty_col_fba, row_data[target_col])
+                curr_row += 1
+            
+            st.success("✅ FBA 模板处理完成！")
+            st.download_button("📥 下载填好的 FBA 模板", save_wb(fba_wb), "FBA_Filled.xlsx")
+
+            txt_df = st.session_state.plan_data[['店铺SKU', target_col]].copy()
+            txt_df.columns = ['sku', 'quantity']
+            tsv_string = txt_df.to_csv(index=False, sep='\t', encoding='utf-8')
+            
+            st.download_button(
+                label="📄 下载 TXT 格式",
+                data=tsv_string,
+                file_name="FBA_Upload_Full.txt",
+                mime="text/plain"
+            )
+
+    if st.session_state.plan_data is not None:
+        st.divider() 
+        st.subheader("第二步：生成分箱包装信息表")
+        ship_mode = st.radio("选择配送方式", ["海运 (默认重量和尺寸)", "快递 (按实际填写)"], horizontal=True)
+        cus_template_file = st.file_uploader("3. 上传从亚马逊下载的《包装箱表》", type=["xlsx"])
+
+        if cus_template_file:
+            cus_wb = openpyxl.load_workbook(cus_template_file)
+            cus_ws = next((sheet for sheet in cus_wb.worksheets if "包装" in sheet.title), cus_wb.worksheets[0])
+
+            header_row_cus = 0
+            for r in range(1, 50):
+                row_content = [str(cus_ws.cell(row=r, column=c).value or "").strip().upper() for c in range(1, 31)]
+                if any(k in row_content for k in ["FNSKU", "SKU", "MERCHANT SKU"]):
+                    header_row_cus = r
+                    break
+
+            if header_row_cus > 0:
+                col_map = {str(cus_ws.cell(row=header_row_cus, column=c).value or "").strip(): c for c in range(1, cus_ws.max_column + 1)}
+                sku_col_idx = col_map.get('SKU', col_map.get('Merchant SKU', col_map.get('FNSKU', 1)))
+                expected_qty_col_idx = col_map.get('预计数量', 10)
+
+                plan_dict = {str(r['店铺SKU']).strip(): r.to_dict() for _, r in st.session_state.plan_data.iterrows()}
+                target_col = [c for c in st.session_state.plan_data.columns if '实际发货数量' in str(c)][0]
+
+                for curr_row in range(header_row_cus + 1, cus_ws.max_row + 1):
+                    sku_cell_value = cus_ws.cell(row=curr_row, column=sku_col_idx).value
+                    if not sku_cell_value or str(sku_cell_value).strip() in ["", "None"]: break
+                    
+                    sku_in_template = str(sku_cell_value).strip()
+                    if sku_in_template in plan_dict:
+                        row_data = plan_dict[sku_in_template]
+                        safe_write(cus_ws, curr_row, expected_qty_col_idx, row_data[target_col])
+                        
+                        box_qty_pairs = []
+                        if '箱号' in row_data and '数量' in row_data: box_qty_pairs.append((row_data['箱号'], row_data['数量']))
+                        for key in row_data.keys():
+                            if '箱号' in str(key) and str(key) != '箱号':
+                                q_key = f"数量{str(key).replace('箱号', '')}"
+                                if q_key in row_data: box_qty_pairs.append((row_data[key], row_data[q_key]))
+                        
+                        for b_val, q_val in box_qty_pairs:
+                            if pd.notna(b_val) and pd.notna(q_val) and float(q_val) > 0:
+                                for b_num, b_qty in parse_box_range(b_val, q_val):
+                                    num_qty = float(b_qty) if float(b_qty) % 1 != 0 else int(float(b_qty))
+                                    if f'包装箱 {b_num} 数量' in col_map:
+                                        safe_write(cus_ws, curr_row, col_map[f'包装箱 {b_num} 数量'], num_qty)
+                                    else:
+                                        for k in col_map:
+                                            if f"包装箱 {b_num}" in str(k) and "数量" in str(k):
+                                                safe_write(cus_ws, curr_row, col_map[k], num_qty)
+                                                break
+
+                max_box = max([int(re.findall(r'\d+', str(c))[-1]) for c in col_map.keys() if re.search(r"包装箱\s*\d+\s*数量|Box\s*\d+\s*Quantity", str(c), re.I) and re.findall(r'\d+', str(c))], default=4)
+                
+                log_rows = {}
+                for r in range(header_row_cus + 1, cus_ws.max_row + 1):
+                    label = str(cus_ws.cell(row=r, column=1).value or "")
+                    if "重量" in label: log_rows["w"] = (r, label)
+                    if "宽度" in label: log_rows["wi"] = (r, label)
+                    if "长度" in label: log_rows["l"] = (r, label)
+                    if "高度" in label: log_rows["h"] = (r, label)
+
+                actual_filled_boxes = 0
+                for c_name, c_idx in col_map.items():
+                    if not ("包装箱" in str(c_name) or "P1 - B" in str(c_name)): continue
+                    match = re.findall(r'\d+', str(c_name))
+                    if not match: continue
+                    b_num = int(match[-1])
+                    if b_num < 1 or b_num > max_box: continue
+
+                    limit_row = min([r_idx for r_idx, txt in log_rows.values()]) if log_rows else cus_ws.max_row
+                    is_box_used = any(isinstance(cus_ws.cell(row=r, column=c_idx).value, (int, float)) and cus_ws.cell(row=r, column=c_idx).value > 0 for r in range(header_row_cus + 1, limit_row))
+                    
+                    if not is_box_used: continue
+                    actual_filled_boxes += 1
+
+                    if "快递" in ship_mode and isinstance(st.session_state.box_info, dict) and b_num in st.session_state.box_info:
+                        info = st.session_state.box_info[b_num]
+                        w_kg, (l_cm, wi_cm, h_cm) = info.get('weight', 0), info.get('dim', [0, 0, 0])
+                        if "w" in log_rows: safe_write(cus_ws, log_rows["w"][0], c_idx, round(w_kg * 2.2046 if any(x in log_rows["w"][1] for x in ["磅", "lb"]) else w_kg, 2))
+                        if "l" in log_rows: safe_write(cus_ws, log_rows["l"][0], c_idx, round(l_cm * 0.3937 if any(x in log_rows["l"][1] for x in ["英寸", "in"]) else l_cm, 2))
+                        if "wi" in log_rows: safe_write(cus_ws, log_rows["wi"][0], c_idx, round(wi_cm * 0.3937 if any(x in log_rows["wi"][1] for x in ["英寸", "in"]) else wi_cm, 2))
+                        if "h" in log_rows: safe_write(cus_ws, log_rows["h"][0], c_idx, round(h_cm * 0.3937 if any(x in log_rows["h"][1] for x in ["英寸", "in"]) else h_cm, 2))
+                    else:
+                        if "w" in log_rows: safe_write(cus_ws, log_rows["w"][0], c_idx, round(33.0 if any(x in log_rows["w"][1] for x in ["磅", "lb"]) else 15.0, 2))
+                        if "l" in log_rows: safe_write(cus_ws, log_rows["l"][0], c_idx, round(24.0 if any(x in log_rows["l"][1] for x in ["英寸", "in"]) else 61.0, 2))
+                        if "wi" in log_rows: safe_write(cus_ws, log_rows["wi"][0], c_idx, round(20.0 if any(x in log_rows["wi"][1] for x in ["英寸", "in"]) else 51.0, 2))
+                        if "h" in log_rows: safe_write(cus_ws, log_rows["h"][0], c_idx, round(19.0 if any(x in log_rows["h"][1] for x in ["英寸", "in"]) else 48.0, 2))
+
+                st.success(f"✅ 装箱信息表处理完成！已自动过滤空箱，实际填充 {actual_filled_boxes} 箱")
+                st.download_button("📥 下载填好的装箱信息表", save_wb(cus_wb), cus_template_file.name)
+
+    st.stop()  # 👈 【关键】这是外箱贴工具的刹车
