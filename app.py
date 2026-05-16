@@ -1347,9 +1347,23 @@ elif choice == "外箱贴自动化工具":
             st.success("✅ FBA 模板处理完成！")
             st.download_button("📥 下载填好的 FBA 模板", save_wb(fba_wb), "FBA_Filled.xlsx")
 
-            txt_df = st.session_state.plan_data[['店铺SKU', target_col]].copy()
-            txt_df.columns = ['sku', 'quantity']
-            tsv_string = txt_df.to_csv(index=False, sep='\t', encoding='utf-8')
+            # ================== 修复 TXT 导出的格式 ==================
+            txt_lines = []
+            for r in range(1, fba_ws.max_row + 1):
+                row_vals = []
+                for c in range(1, 11): 
+                    val = fba_ws.cell(row=r, column=c).value
+                    if val is None:
+                        row_vals.append("")
+                    else:
+                        if isinstance(val, float) and val.is_integer():
+                            row_vals.append(str(int(val)))
+                        else:
+                            row_vals.append(str(val).strip())
+                txt_lines.append("\t".join(row_vals))
+                
+            tsv_string = "\n".join(txt_lines)
+            # =========================================================
             
             st.download_button(
                 label="📄 下载 TXT 格式",
